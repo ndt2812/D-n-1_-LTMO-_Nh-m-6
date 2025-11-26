@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<color name="black">#FF000000</color>
+	<color name="white">#FFFFFFFF</color>
+
+	<!-- Purple aesthetic palette -->
+	<color name="colorPrimary">#5C4DDF</color>
+	<color name="colorOnPrimary">#FFFFFFFF</color>
+	<color name="colorPrimaryContainer">#ADA4FF</color>
+	<color name="colorOnPrimaryContainer">#1E124B</color>
+
+	<color name="colorSecondary">#8E7CFC</color>
+	<color name="colorOnSecondary">#FFFFFFFF</color>
+	<color name="colorSecondaryContainer">#E4DFFF</color>
+	<color name="colorOnSecondaryContainer">#271A65</color>
+
+	<color name="colorTertiary">#F8A3FF</color>
+	<color name="colorOnTertiary">#3A0041</color>
+
+	<color name="colorSurface">#FFFFFF</color>
+	<color name="colorOnSurface">#1F1F1F</color>
+	<color name="colorBackground">#F7F6FC</color>
+	<color name="colorOnBackground">#1F1F1F</color>
+	<color name="colorError">#B00020</color>
+
+	<color name="colorAccent">#5C4DDF</color>
+	<color name="colorSubtitle">#D7D3FF</color>
+</resources>
