@@ -1,0 +1,265 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <img src="<%= book.coverImage %>" class="img-fluid rounded" alt="<%= book.title %>">
+        </div>
+        <div class="col-md-8">
+            <h1><%= book.title %></h1>
+            <h4 class="text-muted">của <%= book.author %></h4>
+            
+            <!-- Rating Display -->
+            <% if (book.averageRating > 0) { %>
+                <div class="mb-2">
+                    <span class="h5">
+                        <% for(let i = 1; i <= 5; i++) { %>
+                            <% if(i <= Math.floor(book.averageRating)) { %>
+                                <span class="text-warning">⭐</span>
+                            <% } else if(i === Math.ceil(book.averageRating) && book.averageRating % 1 !== 0) { %>
+                                <span class="text-warning">⭐</span>
+                            <% } else { %>
+                                <span class="text-muted">☆</span>
+                            <% } %>
+                        <% } %>
+                    </span>
+                    <span class="ms-2">(<%= book.averageRating.toFixed(1) %>/5.0 - <%= book.totalReviews %> đánh giá)</span>
+                    <a href="/reviews/books/<%= book._id %>" class="btn btn-sm btn-outline-info ms-2">Xem đánh giá</a>
+                </div>
+            <% } else { %>
+                <div class="mb-2">
+                    <span class="text-muted">Chưa có đánh giá</span>
+                    <a href="/reviews/books/<%= book._id %>" class="btn btn-sm btn-outline-info ms-2">Xem đánh giá</a>
+                </div>
+            <% } %>
+            
+            <hr>
+            <p><strong>Thể loại:</strong> <%= book.category.name %></p>
+            <p><strong>Mô tả:</strong></p>
+            <p><%= book.description %></p>
+            
+            <!-- Preview Button -->
+            <% if (book.hasPreview) { %>
+                <div class="alert alert-info">
+                    <i class="fas fa-book-open"></i>
+                    <strong>Đọc thử miễn phí!</strong> Đọc 3-5 chương đầu của cuốn sách này.
+                    <a href="/preview/books/<%= book._id %>" class="btn btn-sm btn-primary ms-2">
+                        <i class="fas fa-eye"></i> Đọc thử ngay
+                    </a>
+                </div>
+            <% } %>
+            
+            <hr>
+            <h3 class="text-primary"><%= book.price.toLocaleString('vi-VN') %> đ</h3>
+            
+            <!-- Digital Access Option -->
+            <% if (book.isDigitalAvailable && book.coinPrice) { %>
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-book-open"></i> Mua bản số - Đọc ngay</h5>
+                    <p>Mua quyền truy cập nội dung đầy đủ với <strong><%= book.coinPrice %> <i class="fas fa-coins text-warning"></i> coins</strong></p>
+                    <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                        <a href="/access/books/<%= book._id %>/purchase" class="btn btn-warning">
+                            <i class="fas fa-coins"></i> Mua bằng Coin
+                        </a>
+                        <small class="text-muted d-block mt-1">Số dư của bạn: <%= currentUser.coinBalance || 0 %> coins</small>
+                    <% } else { %>
+                        <a href="/login" class="btn btn-warning">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập để mua
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+            
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">Số lượng:</span>
+                            <input type="number" class="form-control" id="quantity" value="1" min="1" max="10">
+                            <button class="btn btn-success" onclick="addToCart('<%= book._id %>')">
+                                <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Review Button for logged in users -->
+                <div class="mt-3">
+                    <a href="/reviews/books/<%= book._id %>/new" class="btn btn-outline-primary">
+                        <i class="fas fa-star"></i> Viết đánh giá
+                    </a>
+                </div>
+            <% } else { %>
+                <a href="/login" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt"></i> Đăng nhập để mua hàng
+                </a>
+            <% } %>
+            
+            <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') { %>
+                <div class="mt-3">
+                    <h5>Quản lý (Admin)</h5>
+                    <div class="btn-group" role="group">
+                        <a href="/books/<%= book._id %>/edit" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Chỉnh sửa sách
+                        </a>
+                        <button class="btn btn-danger" onclick="deleteBook('<%= book._id %>')">
+                            <i class="fas fa-trash"></i> Xóa sách
+                        </button>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <% if (book.hasPreview) { %>
+                            <a href="/preview/books/<%= book._id %>/edit" class="btn btn-info">
+                                <i class="fas fa-book"></i> Chỉnh sửa nội dung đọc thử
+                            </a>
+                        <% } else { %>
+                            <a href="/preview/books/<%= book._id %>/new" class="btn btn-outline-info">
+                                <i class="fas fa-plus"></i> Thêm nội dung đọc thử
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    
+    <!-- Recent Reviews Section -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h4>Đánh giá gần đây</h4>
+            <div id="recent-reviews">
+                <!-- Reviews will be loaded here via AJAX -->
+            </div>
+            <div class="text-center mt-3">
+                <a href="/reviews/books/<%= book._id %>" class="btn btn-outline-secondary">
+                    Xem tất cả đánh giá
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addToCart(bookId) {
+    const quantity = document.getElementById('quantity').value;
+    
+    fetch('/cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            bookId: bookId,
+            quantity: parseInt(quantity)
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok');
+    })
+    .then(data => {
+        if (data.message) {
+            alert('Đã thêm sách vào giỏ hàng!');
+            // Cập nhật số lượng trong giỏ hàng (nếu có)
+            updateCartCount();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi thêm vào giỏ hàng');
+    });
+}
+
+function deleteBook(bookId) {
+    if (confirm('Bạn có chắc muốn xóa sách này?')) {
+        fetch(`/books/${bookId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/books';
+            } else {
+                alert('Có lỗi xảy ra khi xóa sách');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xóa sách');
+        });
+    }
+}
+
+function updateCartCount() {
+    // Hàm này sẽ được implement để cập nhật số lượng sản phẩm trong giỏ hàng
+    fetch('/cart', {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok');
+    })
+    .then(data => {
+        if (data.items) {
+            const totalItems = data.items.reduce((total, item) => total + item.quantity, 0);
+            const cartCountElement = document.getElementById('cart-count');
+            if (cartCountElement && totalItems > 0) {
+                cartCountElement.textContent = totalItems;
+                cartCountElement.style.display = 'inline';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating cart count:', error);
+    });
+}
+
+// Load recent reviews
+function loadRecentReviews() {
+    fetch(`/reviews/books/<%= book._id %>?limit=3`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.text(); // Get HTML response
+        }
+        throw new Error('Network response was not ok');
+    })
+    .then(html => {
+        // Extract reviews from the response
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const reviews = doc.querySelectorAll('.reviews-list .card');
+        
+        const recentReviewsContainer = document.getElementById('recent-reviews');
+        recentReviewsContainer.innerHTML = '';
+        
+        if (reviews.length > 0) {
+            for (let i = 0; i < Math.min(3, reviews.length); i++) {
+                recentReviewsContainer.appendChild(reviews[i].cloneNode(true));
+            }
+        } else {
+            recentReviewsContainer.innerHTML = '<p class="text-muted text-center">Chưa có đánh giá nào.</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading reviews:', error);
+        document.getElementById('recent-reviews').innerHTML = '<p class="text-muted text-center">Không thể tải đánh giá.</p>';
+    });
+}
+
+// Load cart count khi trang được tải
+document.addEventListener('DOMContentLoaded', function() {
+    updateCartCount();
+    loadRecentReviews();
+});
+</script>
+
+<%- include('../partials/footer') %>

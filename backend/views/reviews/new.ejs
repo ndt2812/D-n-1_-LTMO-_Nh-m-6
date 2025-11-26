@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger"><%= messages.error %></div>
+            <% } %>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Đánh giá sách: <%= book.title %></h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <img src="<%= book.coverImage %>" alt="<%= book.title %>" class="img-fluid">
+                        </div>
+                        <div class="col-md-9">
+                            <h5><%= book.title %></h5>
+                            <p class="text-muted">Tác giả: <%= book.author %></p>
+                            <p class="text-muted">Giá: <%= book.price.toLocaleString() %>đ</p>
+                        </div>
+                    </div>
+
+                    <form action="/reviews/books/<%= book._id %>" method="POST">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Đánh giá (1-5 sao)</label>
+                            <select class="form-select" id="rating" name="rating" required>
+                                <option value="">Chọn số sao...</option>
+                                <option value="1">⭐ 1 sao - Rất tệ</option>
+                                <option value="2">⭐⭐ 2 sao - Tệ</option>
+                                <option value="3">⭐⭐⭐ 3 sao - Bình thường</option>
+                                <option value="4">⭐⭐⭐⭐ 4 sao - Tốt</option>
+                                <option value="5">⭐⭐⭐⭐⭐ 5 sao - Xuất sắc</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Bình luận</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="5" 
+                                      placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..." 
+                                      required maxlength="1000"></textarea>
+                            <div class="form-text">Tối đa 1000 ký tự</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/books/<%= book._id %>" class="btn btn-secondary">Hủy</a>
+                            <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

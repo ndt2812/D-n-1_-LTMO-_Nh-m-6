@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mua quyền truy cập - <%= book.title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <!-- Flash Messages -->
+                <% if (messages && messages.error) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <%= messages.error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (messages && messages.success) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <%= messages.success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- Purchase Form Card -->
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            Mua quyền truy cập sách
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Book Info -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <img src="/uploads/<%= book.coverImage %>" 
+                                     class="img-fluid rounded shadow-sm" 
+                                     alt="<%= book.title %>"
+                                     onerror="this.src='/images/default-book.jpg'">
+                            </div>
+                            <div class="col-md-8">
+                                <h5><%= book.title %></h5>
+                                <p class="text-muted">
+                                    <i class="fas fa-user me-1"></i><%= book.author %>
+                                </p>
+                                <p><%= book.description %></p>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p class="mb-1"><strong>Giá tiền mặt:</strong></p>
+                                        <span class="h5 text-success">
+                                            <%= book.price.toLocaleString('vi-VN') %> VND
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="mb-1"><strong>Giá Coin:</strong></p>
+                                        <span class="h5 text-warning">
+                                            <i class="fas fa-coins me-1"></i><%= book.coinPrice %> Coin
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Wallet Info -->
+                        <div class="alert alert-info">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h6 class="mb-1">Số dư ví của bạn</h6>
+                                    <span class="h5 text-primary">
+                                        <i class="fas fa-wallet me-2"></i>
+                                        <%= user.coinBalance %> Coin
+                                    </span>
+                                </div>
+                                <div class="col-auto">
+                                    <a href="/coins/topup" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-plus me-1"></i>Nạp thêm
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Purchase Form -->
+                        <form method="POST" action="/access/books/<%= book._id %>/purchase">
+                            <div class="mb-3">
+                                <label for="accessType" class="form-label">
+                                    <strong>Loại quyền truy cập</strong>
+                                </label>
+                                <select class="form-select" id="accessType" name="accessType" required>
+                                    <option value="full_access">Truy cập đầy đủ - <%= book.coinPrice %> Coin</option>
+                                    <!-- Future options can be added here -->
+                                </select>
+                                <div class="form-text">
+                                    Truy cập đầy đủ cho phép bạn đọc toàn bộ nội dung sách mãi mãi.
+                                </div>
+                            </div>
+
+                            <!-- Payment Summary -->
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <h6 class="card-title">Tóm tắt thanh toán</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Giá sách:</span>
+                                        <span><%= book.coinPrice %> Coin</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Phí dịch vụ:</span>
+                                        <span>0 Coin</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Tổng cộng:</span>
+                                        <span class="text-warning">
+                                            <i class="fas fa-coins me-1"></i><%= book.coinPrice %> Coin
+                                        </span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Số dư sau giao dịch:</span>
+                                        <span class="<%= (user.coinBalance - book.coinPrice >= 0) ? 'text-success' : 'text-danger' %>">
+                                            <%= user.coinBalance - book.coinPrice %> Coin
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terms and Conditions -->
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terms" required>
+                                    <label class="form-check-label" for="terms">
+                                        Tôi đồng ý với <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">điều khoản sử dụng</a>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/books/<%= book._id %>" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Quay lại
+                                </a>
+                                <% if (user.coinBalance >= book.coinPrice) { %>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="fas fa-coins me-2"></i>
+                                        Mua với <%= book.coinPrice %> Coin
+                                    </button>
+                                <% } else { %>
+                                    <button type="button" class="btn btn-warning disabled">
+                                        <i class="fas fa-coins me-2"></i>
+                                        Không đủ Coin
+                                    </button>
+                                    <a href="/coins/topup" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>
+                                        Nạp thêm Coin
+                                    </a>
+                                <% } %>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms and Conditions Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Điều khoản sử dụng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Quyền và trách nhiệm của người mua:</h6>
+                    <ul>
+                        <li>Quyền truy cập sách sẽ được kích hoạt ngay sau khi thanh toán thành công</li>
+                        <li>Bạn có quyền đọc sách mãi mãi với tài khoản này</li>
+                        <li>Không được chia sẻ tài khoản hoặc nội dung sách cho người khác</li>
+                        <li>BookStore có quyền thu hồi quyền truy cập nếu phát hiện vi phạm</li>
+                    </ul>
+                    
+                    <h6>Chính sách hoàn tiền:</h6>
+                    <ul>
+                        <li>Coin đã thanh toán không thể hoàn lại</li>
+                        <li>Trường hợp lỗi hệ thống, chúng tôi sẽ hỗ trợ khắc phục hoặc hoàn Coin</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

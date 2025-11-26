@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        .admin-sidebar .nav-link {
+            color: #adb5bd;
+        }
+        .admin-sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background-color: #495057;
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 admin-sidebar p-3">
+                <h4 class="text-white mb-4">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </h4>
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/admin">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="/admin/books">
+                        <i class="fas fa-book"></i> Quản lý sách
+                    </a>
+                    <a class="nav-link active" href="/admin/users">
+                        <i class="fas fa-users"></i> Quản lý người dùng
+                    </a>
+                    <a class="nav-link" href="/admin/categories">
+                        <i class="fas fa-tags"></i> Quản lý danh mục
+                    </a>
+                    <a class="nav-link" href="/admin/reports">
+                        <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
+                    </a>
+                    <hr class="text-secondary">
+                    <a class="nav-link" href="/books">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a class="nav-link" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                    <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                        <h1><%= title %></h1>
+                        <div>
+                            <a href="/admin/users" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                            <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                        </div>
+                    </div>                <!-- Flash Messages -->
+                <% if (typeof success !== 'undefined' && success.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show mt-3">
+                        <%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- User Profile -->
+                <div class="row mt-4">
+                    <!-- Basic Info -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <% if (user.avatar) { %>
+                                    <img src="/uploads/<%= user.avatar %>" alt="Avatar" class="profile-avatar mb-3">
+                                <% } else { %>
+                                    <div class="profile-avatar bg-secondary d-flex align-items-center justify-content-center mb-3 mx-auto">
+                                        <i class="fas fa-user fa-2x text-white"></i>
+                                    </div>
+                                <% } %>
+                                
+                                <h4><%= user.username %></h4>
+                                <% if (user.role === 'admin') { %>
+                                    <span class="badge bg-danger fs-6">Quản trị viên</span>
+                                <% } else { %>
+                                    <span class="badge bg-primary fs-6">Khách hàng</span>
+                                <% } %>
+                                
+                                <hr>
+                                
+                                <div class="row text-center">
+                                    <div class="col-12">
+                                        <h5 class="text-warning">
+                                            <i class="fas fa-coins"></i> <%= user.coinBalance || 0 %> xu
+                                        </h5>
+                                        <small class="text-muted">Số dư hiện tại</small>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                <div class="text-start">
+                                    <p class="mb-1">
+                                        <strong>Ngày tạo:</strong><br>
+                                        <small><%= new Date(user.createdAt).toLocaleString('vi-VN') %></small>
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>Cập nhật cuối:</strong><br>
+                                        <small><%= new Date(user.updatedAt).toLocaleString('vi-VN') %></small>
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>Trạng thái:</strong><br>
+                                        <% if (typeof user.isActive === 'undefined' || user.isActive) { %>
+                                            <span class="badge bg-success">Hoạt động</span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">Bị khóa</span>
+                                        <% } %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <% if (user.role !== 'admin') { %>
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Thao tác</h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Toggle Role -->
+                                    <form method="POST" action="/admin/users/<%= user._id %>/role" class="mb-2">
+                                        <input type="hidden" name="role" value="<%= user.role === 'admin' ? 'customer' : 'admin' %>">
+                                        <button type="submit" class="btn btn-warning w-100" 
+                                                onclick="return confirm('Bạn có chắc muốn thay đổi vai trò?')">
+                                            <i class="fas fa-user-cog"></i> 
+                                            <%= user.role === 'admin' ? 'Hạ xuống khách hàng' : 'Nâng lên admin' %>
+                                        </button>
+                                    </form>
+
+                                    <!-- Toggle Status -->
+                                    <form method="POST" action="/admin/users/<%= user._id %>/toggle-status">
+                                        <button type="submit" class="btn btn-<%= (typeof user.isActive === 'undefined' || user.isActive) ? 'danger' : 'success' %> w-100"
+                                                onclick="return confirm('Bạn có chắc muốn thay đổi trạng thái tài khoản?')">
+                                            <i class="fas fa-<%= (typeof user.isActive === 'undefined' || user.isActive) ? 'lock' : 'unlock' %>"></i>
+                                            <%= (typeof user.isActive === 'undefined' || user.isActive) ? 'Khóa tài khoản' : 'Mở khóa tài khoản' %>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Detailed Info -->
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Thông tin chi tiết</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Thông tin cá nhân</h6>
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th width="30%">Họ tên:</th>
+                                                <td><%= user.profile?.fullName || 'Chưa cập nhật' %></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Email:</th>
+                                                <td><%= user.profile?.email || 'Chưa cập nhật' %></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Số điện thoại:</th>
+                                                <td><%= user.profile?.phone || 'Chưa cập nhật' %></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Địa chỉ:</th>
+                                                <td><%= user.profile?.address || 'Chưa cập nhật' %></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Thành phố:</th>
+                                                <td><%= user.profile?.city || 'Chưa cập nhật' %></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Mã bưu điện:</th>
+                                                <td><%= user.profile?.postalCode || 'Chưa cập nhật' %></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <h6>Thông tin tài khoản</h6>
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th width="40%">Tên đăng nhập:</th>
+                                                <td><%= user.username %></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Vai trò:</th>
+                                                <td>
+                                                    <% if (user.role === 'admin') { %>
+                                                        <span class="badge bg-danger">Quản trị viên</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-primary">Khách hàng</span>
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Số dư xu:</th>
+                                                <td>
+                                                    <span class="text-warning">
+                                                        <i class="fas fa-coins"></i> <%= user.coinBalance || 0 %> xu
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Trạng thái:</th>
+                                                <td>
+                                                    <% if (typeof user.isActive === 'undefined' || user.isActive) { %>
+                                                        <span class="badge bg-success">Hoạt động</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-danger">Bị khóa</span>
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Ngày tạo:</th>
+                                                <td><%= new Date(user.createdAt).toLocaleString('vi-VN') %></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Cập nhật cuối:</th>
+                                                <td><%= new Date(user.updatedAt).toLocaleString('vi-VN') %></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Info Cards -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Ghi chú</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <% if (user.role === 'admin') { %>
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <strong>Lưu ý:</strong> Đây là tài khoản quản trị viên. Hãy thận trọng khi thực hiện các thao tác.
+                                            </div>
+                                        <% } %>
+                                        
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Thông tin:</strong> 
+                                            Tài khoản này đã được tạo vào <%= new Date(user.createdAt).toLocaleDateString('vi-VN') %>
+                                            và có <%= user.coinBalance || 0 %> xu trong ví.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

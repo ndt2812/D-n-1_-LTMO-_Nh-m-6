@@ -1,0 +1,182 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <h1 class="my-4"><%= title %></h1>
+
+    <!-- Search and Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-search"></i> Tìm sách của bạn
+            </h5>
+            <form action="/books" method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tên sách..." value="<%= query.search || '' %>">
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select">
+                        <option value="">Tất cả thể loại</option>
+                        <% categories.forEach(function(category) { %>
+                            <option value="<%= category._id %>" <%= query.category == category._id ? 'selected' : '' %>>
+                                <%= category.name %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="minPrice" class="form-control" placeholder="Giá tối thiểu" value="<%= query.minPrice || '' %>">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="maxPrice" class="form-control" placeholder="Giá tối đa" value="<%= query.maxPrice || '' %>">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Book Listing -->
+    <div class="row">
+        <% if (books.length > 0) { %>
+            <% books.forEach(function(book) { %>
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100">
+                        <a href="/books/<%= book._id %>">
+                            <img src="<%= book.coverImage %>" class="card-img-top" alt="<%= book.title %>" style="height: 300px; object-fit: cover;">
+                        </a>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">
+                                <a href="/books/<%= book._id %>" class="text-decoration-none">
+                                    <%= book.title %>
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted">Tác giả: <%= book.author %></p>
+                            <p class="card-text text-muted small">Thể loại: <%= book.category.name %></p>
+                            <p class="card-text text-primary fs-5">
+                                <strong><%= book.price.toLocaleString('vi-VN') %> đ</strong>
+                            </p>
+                            
+                            <div class="mt-auto">
+                                <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                                    <button class="btn btn-success btn-sm w-100" onclick="addToCartFromList('<%= book._id %>')">
+                                        <i class="fas fa-cart-plus"></i> Thêm vào giỏ
+                                    </button>
+                                <% } else { %>
+                                    <a href="/login" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="fas fa-sign-in-alt"></i> Đăng nhập để mua
+                                    </a>
+                                <% } %>
+                                
+                                <% if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') { %>
+                                    <div class="btn-group w-100 mt-2" role="group">
+                                        <a href="/books/<%= book._id %>/edit" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteBook('<%= book._id %>')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-book-open fa-5x text-muted mb-3"></i>
+                    <h4>Không tìm thấy sách nào</h4>
+                    <p class="text-muted">Hãy thử tìm kiếm với từ khóa khác</p>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+function addToCartFromList(bookId) {
+    fetch('/cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            bookId: bookId,
+            quantity: 1
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok');
+    })
+    .then(data => {
+        if (data.message) {
+            alert('Đã thêm sách vào giỏ hàng!');
+            updateCartCount();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra khi thêm vào giỏ hàng');
+    });
+}
+
+function deleteBook(bookId) {
+    if (confirm('Bạn có chắc muốn xóa sách này?')) {
+        fetch(`/books/${bookId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Có lỗi xảy ra khi xóa sách');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xóa sách');
+        });
+    }
+}
+
+function updateCartCount() {
+    fetch('/cart', {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Network response was not ok');
+    })
+    .then(data => {
+        if (data.items) {
+            const totalItems = data.items.reduce((total, item) => total + item.quantity, 0);
+            const cartCountElement = document.getElementById('cart-count');
+            if (cartCountElement && totalItems > 0) {
+                cartCountElement.textContent = totalItems;
+                cartCountElement.style.display = 'inline';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating cart count:', error);
+    });
+}
+
+// Load cart count khi trang được tải
+document.addEventListener('DOMContentLoaded', function() {
+    updateCartCount();
+});
+</script>
+
+<%- include('../partials/footer') %>

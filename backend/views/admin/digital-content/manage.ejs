@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        .admin-sidebar .nav-link {
+            color: #adb5bd;
+        }
+        .admin-sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background-color: #495057;
+        }
+        .feature-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .feature-card.enabled {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+        .feature-card.disabled {
+            border-color: #dc3545;
+            background-color: #fff8f8;
+        }
+        .chapter-input {
+            border: 1px dashed #ccc;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+        }
+        .file-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 admin-sidebar p-3">
+                <h4 class="text-white mb-4">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </h4>
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/admin">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="/admin/books">
+                        <i class="fas fa-book"></i> Quản lý sách
+                    </a>
+                    <a class="nav-link" href="/admin/inventory">
+                        <i class="fas fa-warehouse"></i> Quản lý kho hàng
+                    </a>
+                    <a class="nav-link active" href="/admin/digital-content">
+                        <i class="fas fa-tablet-alt"></i> Nội dung số
+                    </a>
+                    <a class="nav-link" href="/admin/promotions">
+                        <i class="fas fa-tags"></i> Mã khuyến mãi
+                    </a>
+                    <a class="nav-link" href="/admin/coin-transactions">
+                        <i class="fas fa-coins"></i> Giao dịch Coin
+                    </a>
+                    <a class="nav-link" href="/admin/users">
+                        <i class="fas fa-users"></i> Quản lý người dùng
+                    </a>
+                    <a class="nav-link" href="/admin/categories">
+                        <i class="fas fa-tags"></i> Quản lý danh mục
+                    </a>
+                    <a class="nav-link" href="/admin/reports">
+                        <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
+                    </a>
+                    <hr class="text-secondary">
+                    <a class="nav-link" href="/books">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a class="nav-link" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                    <h1><%= title %></h1>
+                    <div>
+                        <a href="/admin/digital-content" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                        <span class="badge bg-primary ms-2">Admin: <%= currentUser.username %></span>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show mt-3">
+                        <%= success_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- Book Info -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Thông tin sách</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <img src="<%= book.coverImage %>" alt="<%= book.title %>" class="img-fluid rounded">
+                            </div>
+                            <div class="col-md-10">
+                                <h4><%= book.title %></h4>
+                                <p class="text-muted"><strong>Tác giả:</strong> <%= book.author %></p>
+                                <p class="text-muted"><strong>Danh mục:</strong> <%= book.category?.name || 'Chưa phân loại' %></p>
+                                <p class="text-muted"><strong>Giá bán:</strong> <%= book.price.toLocaleString('vi-VN') %>₫</p>
+                                <div class="mt-3">
+                                    <% if (book.isDigitalAvailable) { %>
+                                        <span class="badge bg-success me-2">
+                                            <i class="fas fa-download"></i> Digital Available
+                                        </span>
+                                    <% } %>
+                                    <% if (book.hasPreview) { %>
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-eye"></i> Has Preview
+                                        </span>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Digital Settings -->
+                <div class="feature-card <%= book.isDigitalAvailable ? 'enabled' : 'disabled' %>">
+                    <h5>
+                        <i class="fas fa-download"></i> Cài đặt nội dung số
+                    </h5>
+                    <form method="POST" action="/admin/digital-content/<%= book._id %>/settings">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="isDigitalAvailable" 
+                                           name="isDigitalAvailable" <%= book.isDigitalAvailable ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="isDigitalAvailable">
+                                        Bật tính năng digital
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="coinPrice" class="form-label">Giá bằng Coin</label>
+                                    <input type="number" class="form-control" id="coinPrice" name="coinPrice" 
+                                           value="<%= book.coinPrice || '' %>" min="0" placeholder="0">
+                                    <small class="text-muted">Để trống hoặc 0 = miễn phí</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="hasPreview" 
+                                           name="hasPreview" <%= book.hasPreview ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="hasPreview">
+                                        Bật tính năng preview
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Lưu cài đặt
+                        </button>
+                    </form>
+                </div>
+
+                <!-- File Upload -->
+                <div class="feature-card">
+                    <h5>
+                        <i class="fas fa-cloud-upload-alt"></i> Upload file nội dung
+                    </h5>
+                    
+                    <% if (book.digitalContentPath) { %>
+                        <div class="file-info mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>File hiện tại:</strong> <%= book.digitalContentFilename %><br>
+                                    <small class="text-muted">
+                                        Kích thước: <%= Math.round((book.digitalContentSize || 0) / 1024 / 1024 * 100) / 100 %>MB |
+                                        Loại: <%= book.digitalContentType %>
+                                    </small>
+                                </div>
+                                <form method="POST" action="/admin/digital-content/<%= book._id %>/delete-file" 
+                                      class="d-inline" onsubmit="return confirm('Xác nhận xóa file nội dung?')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash"></i> Xóa file
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <form method="POST" action="/admin/digital-content/<%= book._id %>/upload" 
+                          enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="contentFile" class="form-label">Chọn file nội dung</label>
+                            <input class="form-control" type="file" id="contentFile" name="contentFile" 
+                                   accept=".txt,.pdf,.epub,.mobi" required>
+                            <small class="text-muted">
+                                Hỗ trợ: .txt, .pdf, .epub, .mobi (tối đa 50MB)
+                            </small>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-upload"></i> Upload file
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Preview Content Management -->
+                <div class="feature-card">
+                    <h5>
+                        <i class="fas fa-eye"></i> Quản lý nội dung preview
+                    </h5>
+                    
+                    <% if (previewContent) { %>
+                        <div class="alert alert-info mb-3">
+                            <strong>Preview hiện tại:</strong> 
+                            <%= previewContent.totalChapters %> chương (DB), 
+                            <%= previewContent.chapters ? previewContent.chapters.length : 0 %> chương (array),
+                            tổng <%= previewContent.chapters ? previewContent.chapters.reduce((sum, ch) => sum + (ch.wordCount || 0), 0) : 0 %> từ
+                            <form method="POST" action="/admin/digital-content/<%= book._id %>/delete-preview" 
+                                  class="d-inline ms-3" onsubmit="return confirm('Xác nhận xóa toàn bộ preview?')">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Xóa preview
+                                </button>
+                            </form>
+                        </div>
+                    <% } %>
+
+                    <form method="POST" action="/admin/digital-content/<%= book._id %>/preview" id="previewForm" onsubmit="return submitPreviewForm(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Nội dung preview (3-5 chương):</label>
+                            <div id="chaptersContainer">
+                                <% if (previewContent && previewContent.chapters) { %>
+                                    <% previewContent.chapters.forEach((chapter, index) => { %>
+                                        <div class="chapter-input">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Tiêu đề chương <%= index + 1 %></label>
+                                                    <input type="text" class="form-control" name="chapters[<%= index %>][title]" 
+                                                           value="<%= chapter.title %>" required placeholder="Nhập tiêu đề chương">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Nội dung</label>
+                                                    <textarea class="form-control" name="chapters[<%= index %>][content]" 
+                                                              rows="4" required placeholder="Nhập nội dung chương..."><%= chapter.content %></textarea>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label class="form-label">&nbsp;</label>
+                                                    <button type="button" class="btn btn-outline-danger btn-sm d-block delete-chapter-btn" 
+                                                            data-action="delete-chapter" onclick="removeChapter(this)">
+                                                        <i class="fas fa-trash"></i> Xóa
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <!-- Default empty chapters -->
+                                    <div class="chapter-input">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Tiêu đề chương 1</label>
+                                                <input type="text" class="form-control" name="chapters[0][title]" 
+                                                       required placeholder="Nhập tiêu đề chương">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nội dung</label>
+                                                <textarea class="form-control" name="chapters[0][content]" 
+                                                          rows="4" required placeholder="Nhập nội dung chương..."></textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">&nbsp;</label>
+                                                <button type="button" class="btn btn-outline-danger btn-sm d-block" 
+                                                        onclick="removeChapter(this)">
+                                                    <i class="fas fa-trash"></i> Xóa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chapter-input">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Tiêu đề chương 2</label>
+                                                <input type="text" class="form-control" name="chapters[1][title]" 
+                                                       required placeholder="Nhập tiêu đề chương">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nội dung</label>
+                                                <textarea class="form-control" name="chapters[1][content]" 
+                                                          rows="4" required placeholder="Nhập nội dung chương..."></textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">&nbsp;</label>
+                                                <button type="button" class="btn btn-outline-danger btn-sm d-block" 
+                                                        onclick="removeChapter(this)">
+                                                    <i class="fas fa-trash"></i> Xóa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chapter-input">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Tiêu đề chương 3</label>
+                                                <input type="text" class="form-control" name="chapters[2][title]" 
+                                                       required placeholder="Nhập tiêu đề chương">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nội dung</label>
+                                                <textarea class="form-control" name="chapters[2][content]" 
+                                                          rows="4" required placeholder="Nhập nội dung chương..."></textarea>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label">&nbsp;</label>
+                                                <button type="button" class="btn btn-outline-danger btn-sm d-block" 
+                                                        onclick="removeChapter(this)">
+                                                    <i class="fas fa-trash"></i> Xóa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary" onclick="addChapter()" id="addChapterBtn">
+                                <i class="fas fa-plus"></i> Thêm chương
+                            </button>
+                            <small class="text-muted ms-2">Tối đa 5 chương, tối thiểu 3 chương</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Lưu nội dung preview
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let chapterCount = document.querySelectorAll('.chapter-input').length;
+        
+        // Initialize chapter count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            chapterCount = document.querySelectorAll('.chapter-input').length;
+            updateChapterControls();
+            
+            // Sử dụng event delegation cho nút xóa chương
+            const chaptersContainer = document.getElementById('chaptersContainer');
+            if (chaptersContainer) {
+                chaptersContainer.addEventListener('click', function(e) {
+                    console.log('Click event in chaptersContainer', e.target);
+                    
+                    // Tìm button gần nhất từ element được click
+                    const button = e.target.closest('button');
+                    
+                    // Kiểm tra nếu là nút xóa (có data-action="delete-chapter" hoặc chứa text "Xóa" hoặc icon trash)
+                    if (button) {
+                        const isDeleteButton = button.getAttribute('data-action') === 'delete-chapter' ||
+                                             button.textContent.trim().includes('Xóa') ||
+                                             button.querySelector('.fa-trash') ||
+                                             e.target.closest('.fa-trash');
+                        
+                        if (isDeleteButton) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('✅ Delete button clicked', button);
+                            removeChapter(button);
+                        }
+                    }
+                });
+            } else {
+                console.error('❌ Không tìm thấy chaptersContainer element');
+            }
+        });
+
+        function addChapter() {
+            if (chapterCount >= 5) {
+                alert('Tối đa 5 chương preview');
+                return;
+            }
+
+            const container = document.getElementById('chaptersContainer');
+            const newChapter = document.createElement('div');
+            newChapter.className = 'chapter-input';
+            newChapter.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Tiêu đề chương ${chapterCount + 1}</label>
+                        <input type="text" class="form-control" name="chapters[${chapterCount}][title]" 
+                               required placeholder="Nhập tiêu đề chương">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nội dung</label>
+                        <textarea class="form-control" name="chapters[${chapterCount}][content]" 
+                                  rows="4" required placeholder="Nhập nội dung chương..."></textarea>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-outline-danger btn-sm d-block delete-chapter-btn" 
+                                data-action="delete-chapter" onclick="removeChapter(this)">
+                            <i class="fas fa-trash"></i> Xóa
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(newChapter);
+            chapterCount++;
+            renumberChapters();
+            updateChapterControls();
+        }
+
+        function removeChapter(button) {
+            console.log('🔍 removeChapter called', button);
+            
+            // Tìm element chương cần xóa - đi từ button lên đến khi tìm thấy .chapter-input
+            let chapterElement = null;
+            let current = button;
+            
+            // Tìm từ button đi lên
+            while (current && current !== document.body) {
+                if (current.classList && current.classList.contains('chapter-input')) {
+                    chapterElement = current;
+                    break;
+                }
+                current = current.parentElement;
+            }
+            
+            // Nếu vẫn không tìm thấy, thử dùng closest
+            if (!chapterElement) {
+                chapterElement = button.closest('.chapter-input');
+            }
+            
+            if (!chapterElement) {
+                console.error('❌ Không tìm thấy element chương để xóa');
+                console.log('Button element:', button);
+                console.log('Button parent:', button.parentElement);
+                alert('Lỗi: Không tìm thấy chương để xóa. Vui lòng thử lại.');
+                return;
+            }
+            
+            console.log('✅ Tìm thấy chapter element:', chapterElement);
+            
+            const chapters = document.querySelectorAll('.chapter-input');
+            console.log(`📊 Tổng số chương hiện tại: ${chapters.length}`);
+            
+            if (chapters.length <= 3) {
+                alert('Tối thiểu 3 chương preview');
+                return;
+            }
+
+            // Xác nhận trước khi xóa
+            if (!confirm('Bạn có chắc muốn xóa chương này?')) {
+                return;
+            }
+            
+            console.log('🗑️ Đang xóa chương...');
+            
+            // Xóa hoàn toàn element khỏi DOM
+            chapterElement.remove();
+            
+            // Cập nhật lại số lượng
+            chapterCount = document.querySelectorAll('.chapter-input').length;
+            console.log(`📊 Số chương còn lại sau khi xóa: ${chapterCount}`);
+            
+            // Đánh số lại tất cả các chương còn lại (quan trọng!)
+            renumberChapters();
+            updateChapterControls();
+            
+            console.log(`✅ Đã xóa chương thành công. Còn lại ${chapterCount} chương`);
+            
+            // Tự động lưu sau khi xóa (optional - có thể bật/tắt)
+            // Nếu muốn tự động lưu, uncomment dòng sau:
+            // autoSaveAfterDelete();
+            
+            // Hiển thị thông báo nhắc nhở
+            showSaveReminder();
+        }
+        
+        function showSaveReminder() {
+            // Xóa thông báo cũ nếu có
+            const oldNotification = document.querySelector('.save-reminder-alert');
+            if (oldNotification) {
+                oldNotification.remove();
+            }
+            
+            // Tạo thông báo mới
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-warning alert-dismissible fade show mt-2 save-reminder-alert';
+            notification.innerHTML = `
+                <strong>⚠️ Lưu ý:</strong> Chương đã được xóa khỏi form. 
+                <strong>Vui lòng click nút "Lưu nội dung preview" bên dưới để lưu thay đổi vào database.</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Tìm form và chèn thông báo trước nút submit
+            const form = document.getElementById('previewForm');
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.parentElement.insertBefore(notification, submitButton);
+                
+                // Tự động ẩn sau 10 giây
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.classList.remove('show');
+                        setTimeout(() => notification.remove(), 300);
+                    }
+                }, 10000);
+            }
+        }
+        
+        function autoSaveAfterDelete() {
+            // Tự động submit form sau khi xóa (có thể gây nhiều request)
+            console.log('💾 Tự động lưu sau khi xóa chương...');
+            const form = document.getElementById('previewForm');
+            if (form) {
+                // Tạo một event submit giả
+                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                form.dispatchEvent(submitEvent);
+            }
+        }
+
+        function renumberChapters() {
+            const chapters = document.querySelectorAll('.chapter-input');
+            chapters.forEach((chapter, index) => {
+                // Tìm tất cả các input và textarea trong chương này
+                const titleInput = chapter.querySelector('input[type="text"]');
+                const contentTextarea = chapter.querySelector('textarea');
+                const label = chapter.querySelector('label');
+                
+                // Cập nhật name attribute để form submit đúng (bắt đầu từ 0)
+                if (titleInput) {
+                    titleInput.name = `chapters[${index}][title]`;
+                }
+                if (contentTextarea) {
+                    contentTextarea.name = `chapters[${index}][content]`;
+                }
+                if (label) {
+                    label.textContent = `Tiêu đề chương ${index + 1}`;
+                }
+            });
+        }
+
+        function updateChapterControls() {
+            const addBtn = document.getElementById('addChapterBtn');
+            if (chapterCount >= 5) {
+                addBtn.disabled = true;
+                addBtn.innerHTML = '<i class="fas fa-plus"></i> Đã đạt tối đa (5 chương)';
+            } else {
+                addBtn.disabled = false;
+                addBtn.innerHTML = '<i class="fas fa-plus"></i> Thêm chương';
+            }
+        }
+
+        // Function để submit form với AJAX để đảm bảo chỉ gửi các chương còn lại
+        function submitPreviewForm(e) {
+            e.preventDefault();
+            
+            console.log('📝 submitPreviewForm called');
+            
+            // Đảm bảo renumber lại trước khi submit
+            renumberChapters();
+            
+            const chapters = document.querySelectorAll('.chapter-input');
+            console.log(`📊 Tổng số chương trong DOM: ${chapters.length}`);
+            
+            // Validate số lượng chương
+            if (chapters.length < 3) {
+                alert('Preview cần ít nhất 3 chương');
+                return false;
+            }
+            if (chapters.length > 5) {
+                alert('Preview tối đa 5 chương');
+                return false;
+            }
+            
+            // Thu thập dữ liệu CHỈ từ các chương còn lại trong DOM
+            // Lưu ý: Lấy theo thứ tự trong DOM, không phải theo name attribute
+            const chaptersData = [];
+            chapters.forEach((chapter, domIndex) => {
+                const titleInput = chapter.querySelector('input[type="text"]');
+                const contentTextarea = chapter.querySelector('textarea');
+                
+                if (titleInput && contentTextarea) {
+                    const title = titleInput.value.trim();
+                    const content = contentTextarea.value.trim();
+                    
+                    console.log(`Chương ${domIndex}: title="${title.substring(0, 30)}...", content length=${content.length}`);
+                    
+                    // Chỉ thêm nếu có cả title và content
+                    if (title && content) {
+                        chaptersData.push({
+                            title: title,
+                            content: content
+                        });
+                    } else {
+                        console.warn(`⚠️ Chương ${domIndex} bị bỏ qua vì thiếu title hoặc content`);
+                    }
+                } else {
+                    console.warn(`⚠️ Chương ${domIndex} không tìm thấy input hoặc textarea`);
+                }
+            });
+            
+            console.log(`📦 Số chương hợp lệ để gửi: ${chaptersData.length}`);
+            
+            if (chaptersData.length < 3) {
+                alert(`Preview cần ít nhất 3 chương có đầy đủ tiêu đề và nội dung. Hiện tại có ${chaptersData.length} chương hợp lệ.`);
+                return false;
+            }
+            
+            // Lấy bookId từ form
+            const form = document.getElementById('previewForm');
+            const bookId = form.action.match(/\/admin\/digital-content\/([^\/]+)\/preview/)[1];
+            
+            // Gửi dưới dạng JSON để đảm bảo server nhận được array đúng cách
+            const requestBody = {
+                chapters: chaptersData
+            };
+            
+            console.log(`📤 Submitting ${chaptersData.length} chapters to server as JSON:`, requestBody);
+            
+            // Gửi bằng fetch API với JSON
+            fetch(`/admin/digital-content/${bookId}/preview`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                console.log('📥 Server response status:', response.status);
+                if (response.redirected) {
+                    console.log('✅ Server redirecting to:', response.url);
+                    // Server redirect về trang manage
+                    window.location.href = response.url;
+                } else if (response.ok) {
+                    return response.json().then(data => {
+                        console.log('✅ Server response:', data);
+                        window.location.href = `/admin/digital-content/${bookId}/manage`;
+                    }).catch(() => {
+                        // Nếu không parse được JSON, thử text
+                        return response.text().then(text => {
+                            console.log('Server response (text):', text);
+                            window.location.href = `/admin/digital-content/${bookId}/manage`;
+                        });
+                    });
+                } else {
+                    return response.text().then(text => {
+                        console.error('❌ Server error response:', text);
+                        alert('Có lỗi xảy ra khi lưu preview: ' + text);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error submitting form:', error);
+                alert('Có lỗi xảy ra: ' + error.message);
+            });
+            
+            return false;
+        }
+
+        // Initialize controls
+        updateChapterControls();
+    </script>
+</body>
+</html>

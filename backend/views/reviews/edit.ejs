@@ -1,0 +1,73 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger"><%= messages.error %></div>
+            <% } %>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Chỉnh sửa đánh giá: <%= book.title %></h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <img src="<%= book.coverImage %>" alt="<%= book.title %>" class="img-fluid">
+                        </div>
+                        <div class="col-md-9">
+                            <h5><%= book.title %></h5>
+                            <p class="text-muted">Tác giả: <%= book.author %></p>
+                            <% if (review.isEdited) { %>
+                                <span class="badge bg-info">Đã chỉnh sửa</span>
+                            <% } %>
+                            <% if (!review.canEdit) { %>
+                                <div class="alert alert-warning">
+                                    <small>Lưu ý: Bạn chỉ có thể chỉnh sửa đánh giá trong vòng 7 ngày kể từ khi tạo.</small>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <form action="/reviews/<%= review._id %>?_method=PUT" method="POST">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Đánh giá (1-5 sao)</label>
+                            <select class="form-select" id="rating" name="rating" required>
+                                <option value="1" <%= review.rating === 1 ? 'selected' : '' %>>⭐ 1 sao - Rất tệ</option>
+                                <option value="2" <%= review.rating === 2 ? 'selected' : '' %>>⭐⭐ 2 sao - Tệ</option>
+                                <option value="3" <%= review.rating === 3 ? 'selected' : '' %>>⭐⭐⭐ 3 sao - Bình thường</option>
+                                <option value="4" <%= review.rating === 4 ? 'selected' : '' %>>⭐⭐⭐⭐ 4 sao - Tốt</option>
+                                <option value="5" <%= review.rating === 5 ? 'selected' : '' %>>⭐⭐⭐⭐⭐ 5 sao - Xuất sắc</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Bình luận</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="5" 
+                                      required maxlength="1000"><%= review.comment %></textarea>
+                            <div class="form-text">Tối đa 1000 ký tự</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/books/<%= book._id %>" class="btn btn-secondary">Hủy</a>
+                            <% if (review.canEdit) { %>
+                                <button type="submit" class="btn btn-primary">Cập nhật đánh giá</button>
+                            <% } else { %>
+                                <button type="button" class="btn btn-primary" disabled>Hết hạn chỉnh sửa</button>
+                            <% } %>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-3">
+                    <form action="/reviews/<%= review._id %>?_method=DELETE" method="POST" 
+                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?')">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Xóa đánh giá</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

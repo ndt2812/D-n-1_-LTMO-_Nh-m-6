@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        .admin-sidebar .nav-link {
+            color: #adb5bd;
+        }
+        .admin-sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background-color: #495057;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 300px;
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .image-preview img {
+            max-width: 100%;
+            height: auto;
+        }
+        .current-cover {
+            max-width: 150px;
+            height: auto;
+            border-radius: 5px;
+        }
+        .required {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 admin-sidebar p-3">
+                <h4 class="text-white mb-4">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </h4>
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/admin">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a class="nav-link active" href="/admin/books">
+                        <i class="fas fa-book"></i> Quản lý sách
+                    </a>
+                    <a class="nav-link" href="/admin/inventory">
+                        <i class="fas fa-warehouse"></i> Quản lý kho hàng
+                    </a>
+                    <a class="nav-link" href="/admin/digital-content">
+                        <i class="fas fa-tablet-alt"></i> Nội dung số
+                    </a>
+                    <a class="nav-link" href="/admin/promotions">
+                        <i class="fas fa-tags"></i> Mã khuyến mãi
+                    </a>
+                    <a class="nav-link" href="/admin/coin-transactions">
+                        <i class="fas fa-coins"></i> Giao dịch Coin
+                    </a>
+                    <a class="nav-link" href="/admin/users">
+                        <i class="fas fa-users"></i> Quản lý người dùng
+                    </a>
+                    <a class="nav-link" href="/admin/categories">
+                        <i class="fas fa-tags"></i> Quản lý danh mục
+                    </a>
+                    <a class="nav-link" href="/admin/orders">
+                        <i class="fas fa-shopping-cart"></i> Đơn hàng
+                    </a>
+                    <a class="nav-link" href="/admin/reports">
+                        <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
+                    </a>
+                    <hr class="text-secondary">
+                    <a class="nav-link" href="/books">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a class="nav-link" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                    <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                        <h1><%= title %></h1>
+                        <div>
+                            <a href="/admin/books" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                            <a href="/books/<%= book._id %>" class="btn btn-outline-info me-2" target="_blank">
+                                <i class="fas fa-eye"></i> Xem sách
+                            </a>
+                            <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                        </div>
+                    </div>                <!-- Flash Messages -->
+                <% if (errors && errors.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <h6>Có lỗi xảy ra:</h6>
+                        <ul class="mb-0">
+                            <% errors.forEach(error => { %>
+                                <li><%= error.msg %></li>
+                            <% }) %>
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- Edit Book Form -->
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Chỉnh sửa thông tin sách</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="/admin/books/<%= book._id %>/edit" enctype="multipart/form-data">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Tiêu đề <span class="required">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" name="title" 
+                                                       value="<%= book.title %>" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Tác giả <span class="required">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" name="author" 
+                                                       value="<%= book.author %>" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            Mô tả <span class="required">*</span>
+                                        </label>
+                                        <textarea class="form-control" name="description" rows="4" required><%= book.description %></textarea>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Giá (VNĐ) <span class="required">*</span>
+                                                </label>
+                                                <input type="number" class="form-control" name="price" 
+                                                       value="<%= book.price %>" min="0" step="1000" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Giá xu (tùy chọn)
+                                                </label>
+                                                <input type="number" class="form-control" name="coinPrice" 
+                                                       value="<%= book.coinPrice || '' %>" min="0" step="1"
+                                                       placeholder="Để trống nếu không bán bằng xu">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Số lượng <span class="required">*</span>
+                                                </label>
+                                                <input type="number" class="form-control" name="stock" 
+                                                       value="<%= book.stock %>" min="0" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    Danh mục <span class="required">*</span>
+                                                </label>
+                                                <select class="form-select" name="category" required>
+                                                    <option value="">Chọn danh mục...</option>
+                                                    <% categories.forEach(cat => { %>
+                                                        <option value="<%= cat._id %>" 
+                                                                <%= book.category._id.toString() === cat._id.toString() ? 'selected' : '' %>>
+                                                            <%= cat.name %>
+                                                        </option>
+                                                    <% }) %>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">ISBN (tùy chọn)</label>
+                                                <input type="text" class="form-control" name="isbn" 
+                                                       value="<%= book.isbn || '' %>" placeholder="978-...">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Ngày xuất bản (tùy chọn)</label>
+                                        <input type="date" class="form-control" name="publishedDate" 
+                                               value="<%= book.publishedDate ? new Date(book.publishedDate).toISOString().split('T')[0] : '' %>">
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label class="form-label">Ảnh bìa sách mới (tùy chọn)</label>
+                                        <input type="file" class="form-control" name="coverImage" 
+                                               accept="image/*" onchange="previewImage(this)">
+                                        <div class="form-text">Chọn file ảnh mới để thay thế ảnh hiện tại (JPG, PNG, GIF). Tối đa 5MB.</div>
+                                    </div>
+
+                                    <!-- Book Statistics -->
+                                    <div class="card bg-light mb-3">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">Thống kê sách</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row text-center">
+                                                <div class="col-md-3">
+                                                    <h5 class="text-warning">
+                                                        <% for (let i = 1; i <= 5; i++) { %>
+                                                            <i class="fas fa-star<%= i <= book.averageRating ? '' : ' text-muted' %>"></i>
+                                                        <% } %>
+                                                    </h5>
+                                                    <small>Đánh giá trung bình</small>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h5 class="text-info"><%= book.totalReviews %></h5>
+                                                    <small>Số lượt đánh giá</small>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h5 class="text-success">
+                                                        <%= book.isDigitalAvailable ? 'Có' : 'Không' %>
+                                                    </h5>
+                                                    <small>Bản điện tử</small>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h5 class="text-primary">
+                                                        <%= book.hasPreview ? 'Có' : 'Không' %>
+                                                    </h5>
+                                                    <small>Xem trước</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <a href="/admin/books" class="btn btn-secondary me-md-2">
+                                            <i class="fas fa-times"></i> Hủy bỏ
+                                        </a>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Cập nhật sách
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Danger Zone -->
+                                <hr class="mt-4">
+                                <div class="card border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-exclamation-triangle"></i> Vùng nguy hiểm
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">
+                                            Sau khi xóa sách, tất cả dữ liệu liên quan sẽ bị mất vĩnh viễn và không thể khôi phục.
+                                        </p>
+                                        <form method="POST" action="/admin/books/<%= book._id %>/delete" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger"
+                                                    onclick="return confirm('Bạn có CHẮC CHẮN muốn xóa sách này? Thao tác này không thể hoàn tác!')">
+                                                <i class="fas fa-trash"></i> Xóa sách vĩnh viễn
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Cover & Preview -->
+                    <div class="col-md-4">
+                        <!-- Current Cover -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Ảnh bìa hiện tại</h6>
+                            </div>
+                            <div class="card-body text-center">
+                                <% if (book.coverImage) { %>
+                                    <img src="/uploads/<%= book.coverImage %>" alt="Current Cover" class="current-cover">
+                                <% } else { %>
+                                    <div class="bg-light p-4 rounded">
+                                        <i class="fas fa-image fa-3x text-muted"></i>
+                                        <p class="text-muted mt-2">Chưa có ảnh bìa</p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- New Image Preview -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Xem trước ảnh mới</h6>
+                            </div>
+                            <div class="card-body text-center">
+                                <div id="imagePreview" class="image-preview">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                    <p class="text-muted mt-2">Chọn ảnh để xem trước</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Book Info -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Thông tin thêm</h6>
+                            </div>
+                            <div class="card-body">
+                                <small class="text-muted">
+                                    <strong>Ngày tạo:</strong><br>
+                                    <%= new Date(book.createdAt).toLocaleString('vi-VN') %>
+                                </small>
+                                <hr>
+                                <small class="text-muted">
+                                    <strong>Cập nhật cuối:</strong><br>
+                                    <%= new Date(book.updatedAt).toLocaleString('vi-VN') %>
+                                </small>
+                                <% if (book.isbn) { %>
+                                    <hr>
+                                    <small class="text-muted">
+                                        <strong>ISBN:</strong><br>
+                                        <%= book.isbn %>
+                                    </small>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="img-fluid">`;
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.innerHTML = `
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                    <p class="text-muted mt-2">Chọn ảnh để xem trước</p>
+                `;
+            }
+        }
+
+        // Auto format price input
+        document.querySelector('input[name="price"]').addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            this.value = value;
+        });
+    </script>
+</body>
+</html>

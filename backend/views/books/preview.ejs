@@ -1,0 +1,127 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger"><%= messages.error %></div>
+            <% } %>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Đọc thử: <%= book.title %></h3>
+                </div>
+                <div class="card-body">
+                    <!-- Book Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-2">
+                            <img src="<%= book.coverImage %>" alt="<%= book.title %>" class="img-fluid">
+                        </div>
+                        <div class="col-md-10">
+                            <h4><%= book.title %></h4>
+                            <p class="text-muted lead">Tác giả: <%= book.author %></p>
+                            <p><%= book.description %></p>
+                            <div class="mb-3">
+                                <strong>Giá: <%= book.price.toLocaleString() %>đ</strong>
+                                <a href="/books/<%= book._id %>" class="btn btn-primary ms-3">Xem chi tiết & Mua sách</a>
+                            </div>
+                            <div class="alert alert-info">
+                                <strong>📖 Nội dung đọc thử:</strong> 
+                                <% 
+                                const summary = previewContent.getPreviewSummary();
+                                %>
+                                <%= summary.totalChapters %> chương đầu 
+                                (Tổng cộng khoảng <%= summary.totalWords %> từ)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table of Contents -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Mục lục</h5>
+                                </div>
+                                <div class="list-group list-group-flush">
+                                    <% previewContent.chapters.forEach((chapter, index) => { %>
+                                        <a href="#chapter-<%= chapter.chapterNumber %>" 
+                                           class="list-group-item list-group-item-action">
+                                            <strong>Chương <%= chapter.chapterNumber %></strong><br>
+                                            <small><%= chapter.title %></small><br>
+                                            <small class="text-muted"><%= chapter.wordCount %> từ</small>
+                                        </a>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div class="col-md-9">
+                            <% previewContent.chapters.forEach((chapter, index) => { %>
+                                <div class="chapter-content mb-5" id="chapter-<%= chapter.chapterNumber %>">
+                                    <h3 class="chapter-title">
+                                        Chương <%= chapter.chapterNumber %>: <%= chapter.title %>
+                                    </h3>
+                                    <div class="chapter-text">
+                                        <%- chapter.content.replace(/\n/g, '<br>') %>
+                                    </div>
+                                    <% if (index < previewContent.chapters.length - 1) { %>
+                                        <hr class="my-5">
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                            
+                            <!-- End of Preview -->
+                            <div class="text-center py-5 bg-light rounded">
+                                <h4>📚 Hết nội dung đọc thử</h4>
+                                <p class="lead">Để đọc tiếp, vui lòng mua sách!</p>
+                                <a href="/books/<%= book._id %>" class="btn btn-primary btn-lg">
+                                    Mua sách ngay - <%= book.price.toLocaleString() %>đ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chapter-content {
+    line-height: 1.8;
+}
+
+.chapter-title {
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.chapter-text {
+    text-align: justify;
+    font-size: 1.1em;
+    text-indent: 2em;
+}
+
+.chapter-text br {
+    margin-bottom: 1em;
+}
+
+/* Smooth scrolling for navigation links */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Sticky table of contents */
+@media (min-width: 768px) {
+    .col-md-3 .card {
+        position: sticky;
+        top: 20px;
+    }
+}
+</style>
+
+<%- include('../partials/footer') %>

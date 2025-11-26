@@ -1,0 +1,146 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger"><%= messages.error %></div>
+            <% } %>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3><%= chapter.title %></h3>
+                        <small class="text-muted">Chương <%= chapter.chapterNumber %> - <%= book.title %></small>
+                    </div>
+                    <a href="/preview/books/<%= book._id %>" class="btn btn-secondary">Quay lại mục lục</a>
+                </div>
+                <div class="card-body">
+                    <!-- Navigation -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <nav aria-label="Chapter navigation">
+                                <ul class="pagination justify-content-center">
+                                    <% 
+                                    const currentIndex = previewContent.chapters.findIndex(ch => ch.chapterNumber === chapter.chapterNumber);
+                                    const prevChapter = currentIndex > 0 ? previewContent.chapters[currentIndex - 1] : null;
+                                    const nextChapter = currentIndex < previewContent.chapters.length - 1 ? previewContent.chapters[currentIndex + 1] : null;
+                                    %>
+                                    
+                                    <% if (prevChapter) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="/preview/books/<%= book._id %>/chapter/<%= prevChapter.chapterNumber %>">
+                                                ← Chương <%= prevChapter.chapterNumber %>
+                                            </a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">Chương <%= chapter.chapterNumber %></span>
+                                    </li>
+                                    
+                                    <% if (nextChapter) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="/preview/books/<%= book._id %>/chapter/<%= nextChapter.chapterNumber %>">
+                                                Chương <%= nextChapter.chapterNumber %> →
+                                            </a>
+                                        </li>
+                                    <% } %>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <!-- Chapter Content -->
+                    <div class="chapter-content">
+                        <h2 class="chapter-title text-center mb-4">
+                            Chương <%= chapter.chapterNumber %>: <%= chapter.title %>
+                        </h2>
+                        
+                        <div class="chapter-text">
+                            <%- chapter.content.replace(/\n/g, '<br><br>') %>
+                        </div>
+                        
+                        <div class="chapter-info mt-4 p-3 bg-light rounded">
+                            <small class="text-muted">
+                                Số từ: <%= chapter.wordCount %> | 
+                                Đã đọc <%= currentIndex + 1 %>/<%= previewContent.chapters.length %> chương preview
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Bottom -->
+                    <div class="row mt-5">
+                        <div class="col-12">
+                            <nav aria-label="Chapter navigation bottom">
+                                <ul class="pagination justify-content-between">
+                                    <li class="page-item">
+                                        <% if (prevChapter) { %>
+                                            <a class="page-link" href="/preview/books/<%= book._id %>/chapter/<%= prevChapter.chapterNumber %>">
+                                                ← Chương trước: <%= prevChapter.title %>
+                                            </a>
+                                        <% } else { %>
+                                            <a class="page-link" href="/preview/books/<%= book._id %>">
+                                                ← Về mục lục
+                                            </a>
+                                        <% } %>
+                                    </li>
+                                    
+                                    <li class="page-item">
+                                        <% if (nextChapter) { %>
+                                            <a class="page-link" href="/preview/books/<%= book._id %>/chapter/<%= nextChapter.chapterNumber %>">
+                                                Chương tiếp: <%= nextChapter.title %> →
+                                            </a>
+                                        <% } else { %>
+                                            <div class="text-center">
+                                                <p class="mb-2"><strong>Hết nội dung đọc thử!</strong></p>
+                                                <a class="btn btn-primary" href="/books/<%= book._id %>">
+                                                    Mua sách để đọc tiếp
+                                                </a>
+                                            </div>
+                                        <% } %>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chapter-content {
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+.chapter-title {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.chapter-text {
+    text-align: justify;
+    font-size: 1.1em;
+    text-indent: 2em;
+    color: #34495e;
+}
+
+.chapter-text p {
+    margin-bottom: 1.2em;
+}
+
+.page-link {
+    color: #3498db;
+}
+
+.page-link:hover {
+    color: #2980b9;
+    background-color: #f8f9fa;
+}
+</style>
+
+<%- include('../partials/footer') %>

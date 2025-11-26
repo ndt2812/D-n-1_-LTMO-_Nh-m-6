@@ -1,0 +1,48 @@
+<%- include('partials/header', { title: 'Register' }) %>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">Đăng ký</h1>
+            </div>
+            <div class="card-body">
+                <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+                    <div class="alert alert-danger">
+                        <ul>
+                            <% errors.forEach(error => { %>
+                                <li><%= error.msg %></li>
+                            <% }) %>
+                        </ul>
+                    </div>
+                <% } %>
+                <form action="/register" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                        <small class="form-text text-muted">Tên đăng nhập của bạn</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="example@email.com" required>
+                        <small class="form-text text-muted">Email sẽ được dùng để khôi phục mật khẩu</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" minlength="6" required>
+                        <small class="form-text text-muted">Mật khẩu phải có ít nhất 6 ký tự</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Đăng ký</button>
+                    <a href="/login" class="btn btn-link">Đã có tài khoản? Đăng nhập</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+

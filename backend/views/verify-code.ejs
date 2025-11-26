@@ -1,0 +1,62 @@
+<%- include('partials/header', { title: 'Xác nhận mã' }) %>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">Xác nhận mã</h1>
+            </div>
+            <div class="card-body">
+                <% if (locals.error && error.length > 0) { %>
+                    <div class="alert alert-danger">
+                        <strong>❌ Lỗi:</strong> <%= error %>
+                    </div>
+                <% } %>
+                <% if (locals.info && info.length > 0) { %>
+                    <div class="alert alert-info"><%= info %></div>
+                <% } %>
+                <div class="alert alert-info">
+                    <strong>📧 Mã xác nhận đã được gửi!</strong><br>
+                    Vui lòng kiểm tra email của bạn (bao gồm cả thư mục Spam) để lấy mã xác nhận 6 chữ số.
+                </div>
+                <p class="text-muted">Nhập mã xác nhận 6 chữ số đã được gửi đến email của bạn:</p>
+                <form action="/verify-code" method="POST">
+                    <input type="hidden" name="email" value="<%= email || '' %>">
+                    <div class="mb-3">
+                        <label for="email_display" class="form-label">Email/Username</label>
+                        <input type="text" class="form-control" id="email_display" value="<%= email || '' %>" disabled>
+                        <small class="form-text text-muted">Email/Username đang được đặt lại mật khẩu</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">
+                            <strong>Mã xác nhận (6 chữ số)</strong> <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control form-control-lg text-center" 
+                               id="code" 
+                               name="code" 
+                               placeholder="Nhập 6 chữ số" 
+                               maxlength="6" 
+                               pattern="[0-9]{6}" 
+                               style="font-size: 24px; letter-spacing: 8px; font-weight: bold;"
+                               required
+                               autocomplete="off"
+                               autofocus>
+                        <small class="form-text text-muted">
+                            Nhập mã 6 chữ số đã nhận qua email (ví dụ: 123456)
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Xác nhận mã</button>
+                    <div class="mt-3 text-center">
+                        <a href="/forgot-password" class="btn btn-link">Quay lại</a>
+                        <span class="mx-2">|</span>
+                        <a href="/forgot-password" class="btn btn-link">Gửi lại mã</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+

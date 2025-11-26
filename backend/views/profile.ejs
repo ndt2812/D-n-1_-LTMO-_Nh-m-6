@@ -1,0 +1,53 @@
+<%- include('partials/header', { title: 'Profile' }) %>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <img src="<%= user.avatar ? user.avatar : '/images/default-avatar.png' %>" class="img-fluid rounded-circle mb-3" alt="Avatar">
+            <h3><%= user.username %></h3>
+        </div>
+        <div class="col-md-8">
+            <h2>Profile</h2>
+            <p>Welcome to your profile page.</p>
+
+            <% if (typeof msg !== 'undefined') { %>
+                <div class="alert alert-info"><%= msg %></div>
+            <% } %>
+
+            <form action="/profile/upload" method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="myImage" class="form-label">Upload Profile Picture</label>
+                    <input class="form-control" type="file" name="myImage" id="myImage">
+                </div>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+
+            <hr>
+
+            <h4>Change Password</h4>
+            <% if (locals.password_error && password_error.length > 0) { %>
+                <div class="alert alert-danger"><%= password_error %></div>
+            <% } %>
+            <% if (locals.password_success && password_success.length > 0) { %>
+                <div class="alert alert-success"><%= password_success %></div>
+            <% } %>
+            <form action="/profile/change-password" method="POST">
+                <div class="mb-3">
+                    <label for="currentPassword" class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                </div>
+                <div class="mb-3">
+                    <label for="newPassword" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                </div>
+                <div class="mb-3">
+                    <label for="confirmNewPassword" class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirmNewPassword" name="confirmNewPassword" required>
+                </div>
+                <button type="submit" class="btn btn-warning">Change Password</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

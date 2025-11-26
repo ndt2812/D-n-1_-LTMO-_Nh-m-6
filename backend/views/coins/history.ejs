@@ -1,0 +1,203 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Sidebar Navigation -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-coins"></i> Coin Wallet</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="/coins/wallet" class="list-group-item list-group-item-action">
+                        <i class="fas fa-wallet"></i> Tổng quan
+                    </a>
+                    <a href="/coins/topup" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus-circle"></i> Nạp Coin
+                    </a>
+                    <a href="/coins/history" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-history"></i> Lịch sử
+                    </a>
+                    <a href="/access/library" class="list-group-item list-group-item-action">
+                        <i class="fas fa-book"></i> Thư viện
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <!-- Flash Messages -->
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= messages.error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+            <% if (messages && messages.success) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= messages.success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-history"></i> Lịch sử giao dịch Coin</h4>
+                    <span class="badge bg-secondary">Tổng số giao dịch: <%= totalTransactions || 0 %></span>
+                </div>
+                <div class="card-body">
+                    <!-- Filters -->
+                    <form class="row g-3 align-items-end mb-3" method="get" action="/coins/history">
+                        <div class="col-md-4">
+                            <label for="type" class="form-label">Loại giao dịch</label>
+                            <select id="type" name="type" class="form-select">
+                                <option value="" <%= !selectedType ? 'selected' : '' %>>Tất cả</option>
+                                <option value="deposit" <%= selectedType === 'deposit' ? 'selected' : '' %>>Nạp tiền</option>
+                                <option value="purchase" <%= selectedType === 'purchase' ? 'selected' : '' %>>Mua sách</option>
+                                <option value="refund" <%= selectedType === 'refund' ? 'selected' : '' %>>Hoàn tiền</option>
+                                <option value="bonus" <%= selectedType === 'bonus' ? 'selected' : '' %>>Bonus</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Lọc
+                            </button>
+                        </div>
+                        <div class="col-md-5 text-md-end">
+                            <a href="/coins/history" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo"></i> Đặt lại
+                            </a>
+                        </div>
+                    </form>
+
+                    <% if (transactions && transactions.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Loại</th>
+                                        <th>Mô tả</th>
+                                        <th class="text-end">Biến động Coin</th>
+                                        <th class="text-end">Số tiền (VNĐ)</th>
+                                        <th class="text-end">Số dư sau giao dịch</th>
+                                        <th class="text-center">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% transactions.forEach(transaction => { %>
+                                        <tr>
+                                            <td>
+                                                <div><strong><%= transaction.createdAt.toLocaleDateString('vi-VN') %></strong></div>
+                                                <small class="text-muted"><%= transaction.createdAt.toLocaleTimeString('vi-VN') %></small>
+                                            </td>
+                                            <td>
+                                                <% if (transaction.type === 'deposit') { %>
+                                                    <span class="badge bg-success"><i class="fas fa-arrow-down"></i> Nạp tiền</span>
+                                                <% } else if (transaction.type === 'purchase') { %>
+                                                    <span class="badge bg-primary"><i class="fas fa-book"></i> Mua sách</span>
+                                                <% } else if (transaction.type === 'refund') { %>
+                                                    <span class="badge bg-info"><i class="fas fa-undo"></i> Hoàn tiền</span>
+                                                <% } else if (transaction.type === 'bonus') { %>
+                                                    <span class="badge bg-warning text-dark"><i class="fas fa-gift"></i> Bonus</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary"><%= transaction.type %></span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <div><%= transaction.description %></div>
+                                                <% if (transaction.relatedBook) { %>
+                                                    <small class="text-muted"><i class="fas fa-book-open"></i> <%= transaction.relatedBook.title %></small>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-end">
+                                                <% const isPositive = ['deposit', 'refund', 'bonus'].includes(transaction.type); %>
+                                                <span class="<%= isPositive ? 'text-success' : 'text-danger' %>">
+                                                    <%= isPositive ? '+' : '-' %><%= transaction.amount.toLocaleString('vi-VN') %>
+                                                    <i class="fas fa-coins text-warning"></i>
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <% if (transaction.realMoneyAmount && transaction.realMoneyAmount > 0) { %>
+                                                    <%= transaction.realMoneyAmount.toLocaleString('vi-VN') %>
+                                                <% } else { %>
+                                                    <span class="text-muted">-</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong><%= transaction.balanceAfter.toLocaleString('vi-VN') %></strong>
+                                                <i class="fas fa-coins text-warning"></i>
+                                            </td>
+                                            <td class="text-center">
+                                                <% if (transaction.status === 'completed') { %>
+                                                    <span class="badge bg-success">Thành công</span>
+                                                <% } else if (transaction.status === 'pending') { %>
+                                                    <span class="badge bg-warning text-dark">Đang xử lý</span>
+                                                <% } else if (transaction.status === 'failed') { %>
+                                                    <span class="badge bg-danger">Thất bại</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary"><%= transaction.status %></span>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <% if (totalPages && totalPages > 1) { %>
+                            <% const typeQuery = selectedType ? `&type=${selectedType}` : ''; %>
+                            <nav aria-label="Coin transactions pagination">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                                        <a class="page-link" href="/coins/history?page=<%= currentPage - 1 %><%= typeQuery %>">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                    <% for (let i = 1; i <= totalPages; i++) { %>
+                                        <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                            <a class="page-link" href="/coins/history?page=<%= i %><%= typeQuery %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+                                    <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                                        <a class="page-link" href="/coins/history?page=<%= currentPage + 1 %><%= typeQuery %>">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        <% } %>
+                    <% } else { %>
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-receipt fa-3x mb-3"></i>
+                            <p class="mb-3">Chưa có giao dịch nào phù hợp với bộ lọc.</p>
+                            <a href="/coins/topup" class="btn btn-primary">
+                                <i class="fas fa-plus-circle"></i> Nạp Coin ngay
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
+
+<%- include('../partials/footer') %>
+

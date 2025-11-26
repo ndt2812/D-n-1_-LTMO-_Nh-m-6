@@ -1,0 +1,207 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+          <i class="fas fa-receipt"></i> Đơn hàng #<%= order.orderNumber %>
+        </h2>
+        
+        <!-- Trạng thái đơn hàng -->
+        <div>
+          <span class="badge <%= 
+            order.orderStatus === 'pending' ? 'bg-warning' :
+            order.orderStatus === 'processing' ? 'bg-info' :
+            order.orderStatus === 'shipped' ? 'bg-primary' :
+            order.orderStatus === 'delivered' ? 'bg-success' :
+            order.orderStatus === 'cancelled' ? 'bg-danger' : 'bg-secondary'
+          %> fs-6">
+            <%= 
+              order.orderStatus === 'pending' ? 'Chờ xử lý' :
+              order.orderStatus === 'processing' ? 'Đang xử lý' :
+              order.orderStatus === 'shipped' ? 'Đã gửi hàng' :
+              order.orderStatus === 'delivered' ? 'Đã giao hàng' :
+              order.orderStatus === 'cancelled' ? 'Đã hủy' : order.orderStatus
+            %>
+          </span>
+        </div>
+      </div>
+      
+      <div class="row">
+        <!-- Thông tin đơn hàng -->
+        <div class="col-lg-8">
+          <!-- Thông tin chi tiết -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Thông tin đơn hàng</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>Ngày đặt hàng:</strong> <%= new Date(order.createdAt).toLocaleDateString('vi-VN') %></p>
+                  <p><strong>Phương thức thanh toán:</strong> 
+                    <span class="badge bg-info">
+                      <% if (order.paymentMethod === 'cash_on_delivery') { %>
+                        <i class="fas fa-money-bill"></i> Thanh toán khi nhận hàng (COD)
+                      <% } else if (order.paymentMethod === 'bank_transfer') { %>
+                        <i class="fas fa-university"></i> Chuyển khoản ngân hàng
+                      <% } else if (order.paymentMethod === 'credit_card') { %>
+                        <i class="fas fa-credit-card"></i> Thẻ tín dụng
+                      <% } else if (order.paymentMethod === 'coin') { %>
+                        <i class="fas fa-coins"></i> Thanh toán bằng coin
+                      <% } else { %>
+                        <%= order.paymentMethod %>
+                      <% } %>
+                    </span>
+                  </p>
+                  <p><strong>Trạng thái thanh toán:</strong> 
+                    <span class="badge <%= 
+                      order.paymentStatus === 'pending' ? 'bg-warning' :
+                      order.paymentStatus === 'paid' ? 'bg-success' :
+                      order.paymentStatus === 'failed' ? 'bg-danger' : 'bg-secondary'
+                    %>">
+                      <%= 
+                        order.paymentStatus === 'pending' ? 'Chờ thanh toán' :
+                        order.paymentStatus === 'paid' ? 'Đã thanh toán' :
+                        order.paymentStatus === 'failed' ? 'Thanh toán thất bại' : order.paymentStatus
+                      %>
+                    </span>
+                  </p>
+                </div>
+                <div class="col-md-6">
+                  <% if (order.trackingNumber) { %>
+                    <p><strong>Mã vận đơn:</strong> <%= order.trackingNumber %></p>
+                  <% } %>
+                  <% if (order.notes) { %>
+                    <p><strong>Ghi chú:</strong> <%= order.notes %></p>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Địa chỉ giao hàng -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Địa chỉ giao hàng</h5>
+            </div>
+            <div class="card-body">
+              <p class="mb-1"><strong><%= order.shippingAddress.fullName %></strong></p>
+              <p class="mb-1">Điện thoại: <%= order.shippingAddress.phone %></p>
+              <p class="mb-1">Địa chỉ: <%= order.shippingAddress.address %></p>
+              <p class="mb-0">
+                <%= order.shippingAddress.city %>
+                <% if (order.shippingAddress.postalCode) { %>
+                  <%= order.shippingAddress.postalCode %>
+                <% } %>
+              </p>
+            </div>
+          </div>
+          
+          <!-- Sách đã đặt -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Sách đã đặt</h5>
+            </div>
+            <div class="card-body">
+              <% order.items.forEach(function(item) { %>
+                <div class="row align-items-center mb-3 pb-3 border-bottom">
+                  <div class="col-md-2">
+                    <img src="<%= item.book.coverImage %>" 
+                         alt="<%= item.book.title %>" 
+                         class="img-fluid rounded">
+                  </div>
+                  <div class="col-md-6">
+                    <h6 class="mb-1"><%= item.book.title %></h6>
+                    <p class="text-muted mb-0">Tác giả: <%= item.book.author %></p>
+                  </div>
+                  <div class="col-md-2 text-center">
+                    <p class="mb-0">Số lượng: <strong><%= item.quantity %></strong></p>
+                  </div>
+                  <div class="col-md-2 text-end">
+                    <p class="mb-1">Giá: <%= item.price.toLocaleString('vi-VN') %> đ</p>
+                    <p class="mb-0 text-primary">
+                      <strong>Tổng: <%= item.subtotal.toLocaleString('vi-VN') %> đ</strong>
+                    </p>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Tóm tắt thanh toán -->
+        <div class="col-lg-4">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Tóm tắt thanh toán</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Tạm tính:</span>
+                <span><%= order.totalAmount.toLocaleString('vi-VN') %> đ</span>
+              </div>
+              
+              <div class="d-flex justify-content-between mb-2">
+                <span>Phí vận chuyển:</span>
+                <span><%= order.shippingFee.toLocaleString('vi-VN') %> đ</span>
+              </div>
+              
+              <hr>
+              
+              <div class="d-flex justify-content-between mb-3">
+                <strong>Tổng cộng:</strong>
+                <strong class="text-primary">
+                  <%= order.finalAmount.toLocaleString('vi-VN') %> đ
+                </strong>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Thao tác -->
+          <div class="card">
+            <div class="card-body">
+              <% if (order.orderStatus === 'pending') { %>
+                <button class="btn btn-danger w-100 mb-2" onclick="cancelOrder('<%= order._id %>')">
+                  <i class="fas fa-times"></i> Hủy đơn hàng
+                </button>
+              <% } %>
+              
+              <a href="/orders" class="btn btn-outline-primary w-100">
+                <i class="fas fa-list"></i> Xem tất cả đơn hàng
+              </a>
+              
+              <a href="/books" class="btn btn-primary w-100 mt-2">
+                <i class="fas fa-shopping-cart"></i> Tiếp tục mua sắm
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function cancelOrder(orderId) {
+  if (confirm('Bạn có chắc muốn hủy đơn hàng này?')) {
+    fetch(`/orders/${orderId}/cancel`, {
+      method: 'POST'
+    })
+    .then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('Không thể hủy đơn hàng. Vui lòng thử lại.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Có lỗi xảy ra khi hủy đơn hàng');
+    });
+  }
+}
+</script>
+
+<%- include('../partials/footer') %>

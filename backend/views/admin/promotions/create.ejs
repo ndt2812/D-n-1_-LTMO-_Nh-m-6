@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        .admin-sidebar .nav-link {
+            color: #adb5bd;
+        }
+        .admin-sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background-color: #495057;
+        }
+        .form-section {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 admin-sidebar p-3">
+                <h4 class="text-white mb-4">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </h4>
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/admin">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="/admin/books">
+                        <i class="fas fa-book"></i> Quản lý sách
+                    </a>
+                    <a class="nav-link" href="/admin/inventory">
+                        <i class="fas fa-warehouse"></i> Quản lý kho hàng
+                    </a>
+                    <a class="nav-link" href="/admin/digital-content">
+                        <i class="fas fa-tablet-alt"></i> Nội dung số
+                    </a>
+                    <a class="nav-link active" href="/admin/promotions">
+                        <i class="fas fa-tags"></i> Mã khuyến mãi
+                    </a>
+                    <a class="nav-link" href="/admin/coin-transactions">
+                        <i class="fas fa-coins"></i> Giao dịch Coin
+                    </a>
+                    <a class="nav-link" href="/admin/users">
+                        <i class="fas fa-users"></i> Quản lý người dùng
+                    </a>
+                    <a class="nav-link" href="/admin/categories">
+                        <i class="fas fa-list-alt"></i> Quản lý danh mục
+                    </a>
+                    <a class="nav-link" href="/admin/orders">
+                        <i class="fas fa-shopping-cart"></i> Đơn hàng
+                    </a>
+                    <a class="nav-link" href="/admin/reports">
+                        <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
+                    </a>
+                    <hr class="text-secondary">
+                    <a class="nav-link" href="/books">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a class="nav-link" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                    <h1><%= title %></h1>
+                    <div>
+                        <a href="/admin/promotions" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                        <span class="badge bg-primary ms-2">Admin: <%= currentUser.username %></span>
+                    </div>
+                </div>
+
+                <!-- Flash Messages -->
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show mt-3">
+                        <%= success_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- Create Promotion Form -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plus"></i> Tạo mã khuyến mãi mới
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/admin/promotions/create">
+                            <!-- Basic Information -->
+                            <div class="form-section">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-info-circle"></i> Thông tin cơ bản
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="code" class="form-label">
+                                                Mã khuyến mãi <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="code" name="code" required
+                                                   placeholder="Ví dụ: NEWUSER2024, SALE50..." maxlength="20"
+                                                   style="text-transform: uppercase;">
+                                            <small class="form-text text-muted">
+                                                Mã từ 3-20 ký tự, chỉ chữ cái và số
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="description" class="form-label">
+                                                Mô tả <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="description" name="description" required
+                                                   placeholder="Mô tả ngắn về khuyến mãi...">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Discount Settings -->
+                            <div class="form-section">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-percentage"></i> Cài đặt giảm giá
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="discountType" class="form-label">
+                                                Loại giảm giá <span class="text-danger">*</span>
+                                            </label>
+                                            <select class="form-select" id="discountType" name="discountType" required>
+                                                <option value="percentage">Phần trăm (%)</option>
+                                                <option value="fixed">Số tiền cố định (₫)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="discountValue" class="form-label">
+                                                Giá trị giảm <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control" id="discountValue" name="discountValue" 
+                                                   required min="0" step="0.01">
+                                            <small class="form-text text-muted" id="discountHelp">
+                                                Nhập % từ 1-100 hoặc số tiền
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="minimumPurchase" class="form-label">Đơn hàng tối thiểu (₫)</label>
+                                            <input type="number" class="form-control" id="minimumPurchase" name="minimumPurchase" 
+                                                   min="0" step="1000" value="0">
+                                            <small class="form-text text-muted">
+                                                0 = Không giới hạn
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Usage Limits -->
+                            <div class="form-section">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-chart-bar"></i> Giới hạn sử dụng
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="maxUsage" class="form-label">Số lượt sử dụng tối đa</label>
+                                            <input type="number" class="form-control" id="maxUsage" name="maxUsage" 
+                                                   min="1" placeholder="Để trống = không giới hạn">
+                                            <small class="form-text text-muted">
+                                                Tổng số lần có thể sử dụng mã này
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Time Settings -->
+                            <div class="form-section">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-calendar"></i> Thời gian hiệu lực
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="startDate" class="form-label">
+                                                Ngày bắt đầu <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="datetime-local" class="form-control" id="startDate" name="startDate" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="endDate" class="form-label">
+                                                Ngày kết thúc <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="datetime-local" class="form-control" id="endDate" name="endDate" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Application Scope -->
+                            <div class="form-section">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-filter"></i> Phạm vi áp dụng
+                                    <small class="fw-normal text-muted">(Tùy chọn - để trống để áp dụng cho tất cả)</small>
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="applicableCategories" class="form-label">Danh mục áp dụng</label>
+                                            <select class="form-select" id="applicableCategories" name="applicableCategories" multiple size="5">
+                                                <% categories.forEach(category => { %>
+                                                    <option value="<%= category._id %>">
+                                                        <%= category.name %>
+                                                    </option>
+                                                <% }) %>
+                                            </select>
+                                            <small class="form-text text-muted">
+                                                Giữ Ctrl để chọn nhiều danh mục
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="applicableBooks" class="form-label">Sách cụ thể</label>
+                                            <select class="form-select" id="applicableBooks" name="applicableBooks" multiple size="5">
+                                                <% books.forEach(book => { %>
+                                                    <option value="<%= book._id %>">
+                                                        <%= book.title %> - <%= book.category?.name || 'Chưa phân loại' %>
+                                                    </option>
+                                                <% }) %>
+                                            </select>
+                                            <small class="form-text text-muted">
+                                                Giữ Ctrl để chọn nhiều sách
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Lưu ý:</strong> Nếu không chọn danh mục hoặc sách cụ thể, mã khuyến mãi sẽ áp dụng cho tất cả sản phẩm.
+                                    Nếu chọn cả danh mục và sách, mã sẽ áp dụng cho cả hai.
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="d-flex justify-content-between">
+                                <a href="/admin/promotions" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Hủy bỏ
+                                </a>
+                                <div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Tạo mã khuyến mãi
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="card mt-4" id="previewCard" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-eye"></i> Xem trước
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success" id="previewContent">
+                            <!-- Preview will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set default dates
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            // Format for datetime-local input
+            const formatDateTime = (date) => {
+                return date.getFullYear() + '-' + 
+                       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(date.getDate()).padStart(2, '0') + 'T' + 
+                       String(date.getHours()).padStart(2, '0') + ':' + 
+                       String(date.getMinutes()).padStart(2, '0');
+            };
+
+            document.getElementById('startDate').value = formatDateTime(tomorrow);
+            document.getElementById('endDate').value = formatDateTime(nextWeek);
+        });
+
+        // Update discount help text
+        document.getElementById('discountType').addEventListener('change', function() {
+            const helpText = document.getElementById('discountHelp');
+            const discountValue = document.getElementById('discountValue');
+            
+            if (this.value === 'percentage') {
+                helpText.textContent = 'Nhập % từ 1-100';
+                discountValue.max = '100';
+                discountValue.placeholder = '10';
+            } else {
+                helpText.textContent = 'Nhập số tiền (₫)';
+                discountValue.max = '';
+                discountValue.placeholder = '50000';
+            }
+            
+            discountValue.value = '';
+        });
+
+        // Auto uppercase code input
+        document.getElementById('code').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+
+        // Preview functionality
+        const previewInputs = ['code', 'description', 'discountType', 'discountValue', 'minimumPurchase'];
+        previewInputs.forEach(inputId => {
+            document.getElementById(inputId).addEventListener('input', updatePreview);
+        });
+
+        function updatePreview() {
+            const code = document.getElementById('code').value;
+            const description = document.getElementById('description').value;
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = document.getElementById('discountValue').value;
+            const minimumPurchase = document.getElementById('minimumPurchase').value;
+
+            if (code && description && discountValue) {
+                let discountText = '';
+                if (discountType === 'percentage') {
+                    discountText = `Giảm ${discountValue}%`;
+                } else {
+                    discountText = `Giảm ${parseInt(discountValue).toLocaleString('vi-VN')}₫`;
+                }
+
+                let minText = '';
+                if (minimumPurchase && parseInt(minimumPurchase) > 0) {
+                    minText = ` (Đơn tối thiểu: ${parseInt(minimumPurchase).toLocaleString('vi-VN')}₫)`;
+                }
+
+                document.getElementById('previewContent').innerHTML = `
+                    <h6 class="text-primary">${code}</h6>
+                    <p class="mb-1">${description}</p>
+                    <p class="mb-0"><strong>${discountText}</strong>${minText}</p>
+                `;
+                document.getElementById('previewCard').style.display = 'block';
+            } else {
+                document.getElementById('previewCard').style.display = 'none';
+            }
+        }
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = parseFloat(document.getElementById('discountValue').value);
+
+            // Validate dates
+            if (startDate >= endDate) {
+                e.preventDefault();
+                alert('Ngày kết thúc phải sau ngày bắt đầu');
+                return;
+            }
+
+            // Validate discount value
+            if (discountType === 'percentage' && (discountValue <= 0 || discountValue > 100)) {
+                e.preventDefault();
+                alert('Phần trăm giảm giá phải từ 1 đến 100');
+                return;
+            }
+
+            if (discountType === 'fixed' && discountValue <= 0) {
+                e.preventDefault();
+                alert('Số tiền giảm phải lớn hơn 0');
+                return;
+            }
+        });
+    </script>
+</body>
+</html>

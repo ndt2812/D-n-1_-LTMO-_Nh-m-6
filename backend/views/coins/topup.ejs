@@ -1,0 +1,252 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Flash Messages -->
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= messages.error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+            <% if (messages && messages.success) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= messages.success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <!-- Page Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3><i class="fas fa-plus-circle"></i> Nạp Coin</h3>
+                        <div>
+                            <small>Số dư hiện tại: </small>
+                            <strong><%= user.coinBalance %> <i class="fas fa-coins text-warning"></i></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top-up Packages -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>Chọn gói nạp</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <% topUpPackages.forEach((package, index) => { %>
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 <%= package.bonus > 0 ? 'border-success' : 'border-primary' %>">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">
+                                            <%= package.coins %> <i class="fas fa-coins text-warning"></i>
+                                            <% if (package.bonus > 0) { %>
+                                                <span class="badge bg-success ms-2">+<%= package.bonus %> Bonus</span>
+                                            <% } %>
+                                        </h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">
+                                            <%= package.vnd.toLocaleString() %> VNĐ
+                                        </h6>
+                                        <% if (package.bonus > 0) { %>
+                                            <p class="card-text">
+                                                <small class="text-success">
+                                                    Tổng nhận: <%= (package.coins + package.bonus) %> coins
+                                                </small>
+                                            </p>
+                                        <% } %>
+                                        <button type="button" class="btn btn-primary select-package" 
+                                                data-amount="<%= package.vnd %>" 
+                                                data-coins="<%= package.coins + package.bonus %>">
+                                            Chọn gói này
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+
+                    <hr>
+
+                    <!-- Custom Amount -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>Hoặc nhập số tiền tùy chỉnh</h6>
+                        </div>
+                        <div class="card-body">
+                            <form id="topupForm" action="/coins/topup" method="POST">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="amount" class="form-label">Số tiền (VNĐ)</label>
+                                        <input type="number" class="form-control" id="amount" name="amount" 
+                                               min="50000" step="10000" placeholder="Tối thiểu 50,000 VNĐ" required>
+                                        <div class="form-text">
+                                            Tỷ lệ: 1,000 VNĐ = 1 Coin
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="paymentMethod" class="form-label">Phương thức thanh toán</label>
+                                        <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                                            <option value="">Chọn phương thức...</option>
+                                            <option value="momo">
+                                                <i class="fas fa-mobile-alt"></i> MoMo Wallet
+                                            </option>
+                                            <option value="vnpay">
+                                                💳 VNPay
+                                            </option>
+                                            <option value="bank_transfer">
+                                                🏦 Chuyển khoản ngân hàng
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div id="coinPreview" class="alert alert-info" style="display: none;">
+                                    <h6>Xem trước:</h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Số tiền:</strong> <span id="previewAmount">0</span> VNĐ
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Nhận được:</strong> <span id="previewCoins">0</span> coins
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Bonus:</strong> <span id="previewBonus">0</span> coins
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-credit-card"></i> Thanh toán ngay
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center mt-3">
+                <a href="/coins/wallet" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại ví
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const coinPreview = document.getElementById('coinPreview');
+    const previewAmount = document.getElementById('previewAmount');
+    const previewCoins = document.getElementById('previewCoins');
+    const previewBonus = document.getElementById('previewBonus');
+
+    // Package selection buttons
+    document.querySelectorAll('.select-package').forEach(button => {
+        button.addEventListener('click', function() {
+            const amount = this.dataset.amount;
+            const coins = this.dataset.coins;
+            
+            amountInput.value = amount;
+            updatePreview();
+            
+            // Scroll to form
+            document.getElementById('topupForm').scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+
+    // Real-time preview update
+    amountInput.addEventListener('input', updatePreview);
+
+    function updatePreview() {
+        const amount = parseInt(amountInput.value) || 0;
+        
+        if (amount >= 50000) {
+            const baseCoins = Math.floor(amount / 1000);
+            let bonusCoins = 0;
+            
+            // Calculate bonus
+            if (amount >= 2000000) bonusCoins = 400;
+            else if (amount >= 1000000) bonusCoins = 150;
+            else if (amount >= 500000) bonusCoins = 50;
+            else if (amount >= 200000) bonusCoins = 10;
+            
+            const totalCoins = baseCoins + bonusCoins;
+            
+            previewAmount.textContent = amount.toLocaleString();
+            previewCoins.textContent = totalCoins.toLocaleString();
+            previewBonus.textContent = bonusCoins.toLocaleString();
+            
+            coinPreview.style.display = 'block';
+        } else {
+            coinPreview.style.display = 'none';
+        }
+    }
+
+    // Form submission
+    document.getElementById('topupForm').addEventListener('submit', function(e) {
+        const amount = parseInt(amountInput.value);
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        
+        if (!amount || amount < 50000) {
+            e.preventDefault();
+            alert('Số tiền nạp tối thiểu là 50,000 VNĐ');
+            return;
+        }
+        
+        if (!paymentMethod) {
+            e.preventDefault();
+            alert('Vui lòng chọn phương thức thanh toán');
+            return;
+        }
+        
+        // Show loading
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.border-success {
+    border-color: #198754 !important;
+}
+
+.border-primary {
+    border-color: #0d6efd !important;
+}
+
+.fas.fa-coins {
+    color: #ffc107;
+}
+
+.select-package {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.select-package:hover {
+    transform: translateY(-2px);
+}
+</style>
+
+<%- include('../partials/footer') %>

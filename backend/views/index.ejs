@@ -1,0 +1,38 @@
+<%- include('partials/header') %>
+
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Welcome to the BookStore</h1>
+        <p class="col-md-8 fs-4">Your one-stop shop for all the books you love.</p>
+    </div>
+</div>
+
+<div class="container">
+    <h2 class="mb-4">New Arrivals</h2>
+    <div class="row">
+        <% if (locals.books && books.length > 0) { %>
+            <% books.forEach(function(book) { %>
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100">
+                        <a href="/books/<%= book._id %>">
+                            <img src="<%= book.coverImage %>" class="card-img-top" alt="<%= book.title %>" style="height: 300px; object-fit: cover;">
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="/books/<%= book._id %>"><%= book.title %></a></h5>
+                            <p class="card-text text-muted"><%= book.author %></p>
+                            <p class="card-text"><strong>$<%= book.price %></strong></p>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <p>No new books to display at the moment.</p>
+        <% } %>
+    </div>
+    <div class="text-center mt-4">
+        <a href="/books" class="btn btn-primary btn-lg">View All Books</a>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+

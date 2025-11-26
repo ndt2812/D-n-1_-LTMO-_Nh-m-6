@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        .admin-sidebar .nav-link {
+            color: #adb5bd;
+        }
+        .admin-sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background-color: #495057;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-card.books {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stats-card.users {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stats-card.admins {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 admin-sidebar p-3">
+                <h4 class="text-white mb-4">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </h4>
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="/admin">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="/admin/books">
+                        <i class="fas fa-book"></i> Quản lý sách
+                    </a>
+                    <a class="nav-link" href="/admin/inventory">
+                        <i class="fas fa-warehouse"></i> Quản lý kho hàng
+                    </a>
+                    <a class="nav-link" href="/admin/digital-content">
+                        <i class="fas fa-tablet-alt"></i> Nội dung số
+                    </a>
+                    <a class="nav-link" href="/admin/promotions">
+                        <i class="fas fa-tags"></i> Mã khuyến mãi
+                    </a>
+                    <a class="nav-link" href="/admin/coin-transactions">
+                        <i class="fas fa-coins"></i> Giao dịch Coin
+                    </a>
+                    <a class="nav-link" href="/admin/users">
+                        <i class="fas fa-users"></i> Quản lý người dùng
+                    </a>
+                    <a class="nav-link" href="/admin/categories">
+                        <i class="fas fa-tags"></i> Quản lý danh mục
+                    </a>
+                    <a class="nav-link" href="/admin/reports">
+                        <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
+                    </a>
+                    <hr class="text-secondary">
+                    <a class="nav-link" href="/books">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a class="nav-link" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                    <h1><%= title %></h1>
+                    <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                </div>
+
+                <!-- Flash Messages -->
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show mt-3">
+                        <%= success_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- Statistics Cards -->
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card stats-card users mb-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title">Người dùng</h5>
+                                        <h2 class="mb-0"><%= stats.totalUsers %></h2>
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-users fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card stats-card books mb-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title">Sách</h5>
+                                        <h2 class="mb-0"><%= stats.totalBooks %></h2>
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-book fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card stats-card admins mb-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title">Quản trị viên</h5>
+                                        <h2 class="mb-0"><%= stats.totalAdmins %></h2>
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-user-shield fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Users and Books -->
+                <div class="row mt-4">
+                    <!-- Recent Users -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Người dùng mới</h5>
+                                <a href="/admin/users" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                            </div>
+                            <div class="card-body">
+                                <% if (recentUsers.length > 0) { %>
+                                    <% recentUsers.forEach(user => { %>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold"><%= user.username %></div>
+                                                <small class="text-muted">
+                                                    <%= user.profile?.fullName || 'Chưa cập nhật tên' %>
+                                                </small>
+                                            </div>
+                                            <small class="text-muted">
+                                                <%= new Date(user.createdAt).toLocaleDateString('vi-VN') %>
+                                            </small>
+                                        </div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <p class="text-muted">Không có người dùng mới</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Books -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Sách mới thêm</h5>
+                                <a href="/admin/books" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                            </div>
+                            <div class="card-body">
+                                <% if (recentBooks.length > 0) { %>
+                                    <% recentBooks.forEach(book => { %>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold"><%= book.title %></div>
+                                                <small class="text-muted">
+                                                    <%= book.author %> - <%= book.category?.name || 'Chưa phân loại' %>
+                                                </small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold text-success">
+                                                    <%= book.price.toLocaleString('vi-VN') %>₫
+                                                </div>
+                                                <small class="text-muted">
+                                                    SL: <%= book.stock %>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <p class="text-muted">Không có sách mới</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Thao tác nhanh</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <a href="/admin/books/create" class="btn btn-primary w-100">
+                                            <i class="fas fa-plus"></i> Thêm sách mới
+                                        </a>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <a href="/admin/inventory" class="btn btn-warning w-100">
+                                            <i class="fas fa-warehouse"></i> Quản lý kho
+                                        </a>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <a href="/admin/digital-content" class="btn btn-info w-100">
+                                            <i class="fas fa-tablet-alt"></i> Nội dung số
+                                        </a>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <a href="/admin/promotions" class="btn btn-success w-100">
+                                            <i class="fas fa-tags"></i> Khuyến mãi
+                                        </a>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <a href="/admin/coin-transactions" class="btn btn-secondary w-100">
+                                            <i class="fas fa-coins"></i> Giao dịch Coin
+                                        </a>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <a href="/admin/users" class="btn btn-outline-primary w-100">
+                                            <i class="fas fa-users"></i> Người dùng
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-2">
+                                        <a href="/admin/categories" class="btn btn-outline-secondary w-100">
+                                            <i class="fas fa-tags"></i> Danh mục
+                                        </a>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <a href="/books" class="btn btn-outline-info w-100">
+                                            <i class="fas fa-eye"></i> Xem trang web
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

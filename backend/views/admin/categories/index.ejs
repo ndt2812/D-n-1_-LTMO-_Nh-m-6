@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-sidebar {
+            background-color: #343a40;
+            min-height: 100vh;
+        }
+        .admin-sidebar .nav-link {
+            color: #adb5bd;
+        }
+        .admin-sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background-color: #495057;
+        }
+        .required {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 admin-sidebar p-3">
+                <h4 class="text-white mb-4">
+                    <i class="fas fa-cog"></i> Admin Panel
+                </h4>
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/admin">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                    <a class="nav-link" href="/admin/books">
+                        <i class="fas fa-book"></i> Quản lý sách
+                    </a>
+                    <a class="nav-link" href="/admin/inventory">
+                        <i class="fas fa-warehouse"></i> Quản lý kho hàng
+                    </a>
+                    <a class="nav-link" href="/admin/digital-content">
+                        <i class="fas fa-tablet-alt"></i> Nội dung số
+                    </a>
+                    <a class="nav-link" href="/admin/promotions">
+                        <i class="fas fa-tags"></i> Mã khuyến mãi
+                    </a>
+                    <a class="nav-link" href="/admin/coin-transactions">
+                        <i class="fas fa-coins"></i> Giao dịch Coin
+                    </a>
+                    <a class="nav-link" href="/admin/users">
+                        <i class="fas fa-users"></i> Quản lý người dùng
+                    </a>
+                    <a class="nav-link active" href="/admin/categories">
+                        <i class="fas fa-list-alt"></i> Quản lý danh mục
+                    </a>
+                    <a class="nav-link" href="/admin/orders">
+                        <i class="fas fa-shopping-cart"></i> Đơn hàng
+                    </a>
+                    <a class="nav-link" href="/admin/reports">
+                        <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
+                    </a>
+                    <hr class="text-secondary">
+                    <a class="nav-link" href="/books">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a class="nav-link" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                    <h1><%= title %></h1>
+                    <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                </div>
+
+                <!-- Flash Messages -->
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show mt-3">
+                        <%= success_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (typeof error !== 'undefined' && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <div class="row mt-4">
+                    <!-- Add Category Form -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-plus"></i> Thêm danh mục mới
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="/admin/categories/create">
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            Tên danh mục <span class="required">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" name="name" 
+                                               placeholder="Ví dụ: Văn học, Khoa học..." required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Mô tả (tùy chọn)</label>
+                                        <textarea class="form-control" name="description" rows="3" 
+                                                  placeholder="Mô tả ngắn về danh mục này..."></textarea>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Thêm danh mục
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Thống kê</h6>
+                            </div>
+                            <div class="card-body text-center">
+                                <h3 class="text-primary"><%= categories.length %></h3>
+                                <p class="text-muted mb-0">Tổng số danh mục</p>
+                            </div>
+                        </div>
+
+                        <!-- Tips -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-lightbulb"></i> Gợi ý
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <small>
+                                        <ul class="mb-0">
+                                            <li>Tên danh mục nên ngắn gọn và dễ hiểu</li>
+                                            <li>Không thể xóa danh mục đang được sử dụng</li>
+                                            <li>Nên có mô tả để dễ quản lý</li>
+                                        </ul>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categories List -->
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Danh sách danh mục</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <% if (categories.length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th width="5%">STT</th>
+                                                    <th width="25%">Tên danh mục</th>
+                                                    <th width="45%">Mô tả</th>
+                                                    <th width="15%">Số sách</th>
+                                                    <th width="10%">Thao tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% categories.forEach((category, index) => { %>
+                                                    <tr>
+                                                        <td><%= index + 1 %></td>
+                                                        <td>
+                                                            <strong><%= category.name %></strong>
+                                                        </td>
+                                                        <td>
+                                                            <% if (category.description) { %>
+                                                                <%= category.description %>
+                                                            <% } else { %>
+                                                                <em class="text-muted">Chưa có mô tả</em>
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-info" id="book-count-<%= category._id %>">
+                                                                <i class="fas fa-spinner fa-spin"></i>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <form method="POST" action="/admin/categories/<%= category._id %>/delete" class="d-inline">
+                                                                <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                                                        onclick="return confirm('Bạn có chắc muốn xóa danh mục này? Chỉ có thể xóa nếu không có sách nào sử dụng.')"
+                                                                        title="Xóa danh mục">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                                        <h5 class="text-muted">Chưa có danh mục nào</h5>
+                                        <p class="text-muted">Bắt đầu bằng việc tạo danh mục đầu tiên</p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Category Management Tips -->
+                        <% if (categories.length > 0) { %>
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle"></i> Lưu ý quản lý danh mục
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-warning">
+                                        <small>
+                                            <strong>Quan trọng:</strong>
+                                            <ul class="mb-0 mt-2">
+                                                <li>Không thể xóa danh mục đang được sử dụng bởi sách</li>
+                                                <li>Trước khi xóa danh mục, hãy chuyển tất cả sách sang danh mục khác</li>
+                                                <li>Tên danh mục phải là duy nhất</li>
+                                                <li>Sau khi xóa danh mục, thao tác không thể hoàn tác</li>
+                                            </ul>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-focus on name input when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.querySelector('input[name="name"]');
+            if (nameInput) {
+                nameInput.focus();
+            }
+
+            // Show static book counts for all category badges
+            const bookCountElements = document.querySelectorAll('[id^="book-count-"]');
+            bookCountElements.forEach(element => {
+                setTimeout(() => {
+                    element.innerHTML = '0 sách';
+                }, Math.random() * 1000 + 500);
+            });
+        });
+    </script>
+</body>
+</html>

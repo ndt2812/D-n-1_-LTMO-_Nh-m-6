@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư viện của tôi - BookStore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    
+    <div class="container mt-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2><i class="fas fa-book-open text-primary me-2"></i>Thư viện của tôi</h2>
+                <p class="text-muted">Tổng cộng <%= totalBooks %> cuốn sách đã mua</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/books" class="btn btn-outline-primary">
+                    <i class="fas fa-shopping-cart me-2"></i>Mua sách khác
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        <% if (messages && messages.error) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= messages.error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <% if (messages && messages.success) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <%= messages.success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <!-- Books Library -->
+        <div class="row">
+            <% if (library && library.length > 0) { %>
+                <% library.forEach(function(access) { %>
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="position-relative">
+                                <img src="/uploads/<%= access.book.coverImage %>" 
+                                     class="card-img-top" 
+                                     alt="<%= access.book.title %>"
+                                     style="height: 300px; object-fit: cover;"
+                                     onerror="this.src='/images/default-book.jpg'">
+                                
+                                <!-- Access Badge -->
+                                <span class="badge bg-success position-absolute top-0 end-0 m-2">
+                                    <i class="fas fa-check-circle me-1"></i>Đã mua
+                                </span>
+                                
+                                <!-- Reading Progress -->
+                                <% if (access.lastReadPage && access.totalPages) { %>
+                                    <div class="position-absolute bottom-0 start-0 end-0 m-2">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" 
+                                                 role="progressbar" 
+                                                 style="width: <%= Math.round(access.lastReadPage / access.totalPages * 100) %>%;">
+                                            </div>
+                                        </div>
+                                        <small class="text-white bg-dark px-2 py-1 rounded">
+                                            <%= access.lastReadPage %>/<%= access.totalPages %> trang
+                                        </small>
+                                    </div>
+                                <% } %>
+                            </div>
+                            
+                            <div class="card-body">
+                                <h5 class="card-title"><%= access.book.title %></h5>
+                                <p class="card-text text-muted">
+                                    <i class="fas fa-user me-1"></i><%= access.book.author %>
+                                </p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Mua ngày: <%= new Date(access.purchaseDate).toLocaleDateString('vi-VN') %>
+                                    </small>
+                                </p>
+                                <p class="card-text">
+                                    <small class="text-success">
+                                        <i class="fas fa-coins me-1"></i>
+                                        Đã thanh toán: <%= access.coinsPaid %> Coin
+                                    </small>
+                                </p>
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <div class="d-grid gap-2">
+                                    <a href="/access/books/<%= access.book._id %>/reader" 
+                                       class="btn btn-primary">
+                                        <i class="fas fa-book-reader me-2"></i>Đọc sách
+                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="/books/<%= access.book._id %>" 
+                                           class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-info-circle me-1"></i>Chi tiết
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" 
+                                                data-bs-toggle="dropdown">
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="/books/<%= access.book._id %>/reviews">
+                                                    <i class="fas fa-star me-2"></i>Đánh giá
+                                                </a>
+                                            </li>
+                                            <% if (access.bookmarks && access.bookmarks.length > 0) { %>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li class="dropdown-header">Bookmarks</li>
+                                                <% access.bookmarks.forEach(function(bookmark) { %>
+                                                    <li>
+                                                        <a class="dropdown-item" 
+                                                           href="/access/books/<%= access.book._id %>/reader?page=<%= bookmark %>">
+                                                            <i class="fas fa-bookmark me-2"></i>Trang <%= bookmark %>
+                                                        </a>
+                                                    </li>
+                                                <% }); %>
+                                            <% } %>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-book-open text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-muted">Thư viện trống</h4>
+                        <p class="text-muted mb-4">Bạn chưa mua cuốn sách nào. Hãy khám phá và mua những cuốn sách yêu thích!</p>
+                        <a href="/books" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart me-2"></i>Mua sách ngay
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+            <nav aria-label="Library pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <% if (currentPage > 1) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<%= currentPage - 1 %>">Trước</a>
+                        </li>
+                    <% } %>
+                    
+                    <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                            <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                        </li>
+                    <% } %>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<%= currentPage + 1 %>">Sau</a>
+                        </li>
+                    <% } %>
+                </ul>
+            </nav>
+        <% } %>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

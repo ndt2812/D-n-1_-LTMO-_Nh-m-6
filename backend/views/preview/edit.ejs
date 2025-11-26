@@ -1,0 +1,151 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger"><%= messages.error %></div>
+            <% } %>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Chỉnh sửa nội dung đọc thử: <%= book.title %></h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <img src="<%= book.coverImage %>" alt="<%= book.title %>" class="img-fluid">
+                        </div>
+                        <div class="col-md-9">
+                            <h5><%= book.title %></h5>
+                            <p class="text-muted">Tác giả: <%= book.author %></p>
+                            <div class="alert alert-info">
+                                <strong>Lưu ý:</strong> Nội dung đọc thử phải có từ 3 đến 5 chương đầu của sách.
+                            </div>
+                        </div>
+                    </div>
+
+                    <form action="/preview/books/<%= book._id %>?_method=PUT" method="POST" id="previewForm">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isActive" value="true" 
+                                       id="isActive" <%= previewContent.isActive ? 'checked' : '' %>>
+                                <label class="form-check-label" for="isActive">
+                                    Kích hoạt nội dung đọc thử
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="chaptersContainer">
+                            <% previewContent.chapters.forEach((chapter, index) => { %>
+                                <div class="chapter-form mb-4 border rounded p-3">
+                                    <h5>Chương <%= chapter.chapterNumber %></h5>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tiêu đề chương</label>
+                                        <input type="text" class="form-control" name="chapters[<%= index %>][title]" 
+                                               value="<%= chapter.title %>" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nội dung chương</label>
+                                        <textarea class="form-control" name="chapters[<%= index %>][content]" rows="10" 
+                                                  required><%= chapter.content %></textarea>
+                                    </div>
+                                    <small class="text-muted">Số từ hiện tại: <%= chapter.wordCount %></small>
+                                </div>
+                            <% }); %>
+                        </div>
+
+                        <!-- Add/Remove Chapter Buttons -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary" id="addChapter">
+                                + Thêm chương (Tối đa 5 chương)
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="removeChapter">
+                                - Xóa chương cuối
+                            </button>
+                            <small class="text-muted d-block mt-2">
+                                Hiện tại: <span id="chapterCount"><%= previewContent.chapters.length %></span>/5 chương
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/books/<%= book._id %>" class="btn btn-secondary">Hủy</a>
+                            <button type="submit" class="btn btn-primary">Cập nhật nội dung</button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Delete Preview Content -->
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">Xóa nội dung đọc thử</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Xóa toàn bộ nội dung đọc thử của sách này. Hành động này không thể hoàn tác.</p>
+                            <form action="/preview/books/<%= book._id %>?_method=DELETE" method="POST" 
+                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa toàn bộ nội dung đọc thử? Hành động này không thể hoàn tác!')">
+                                <button type="submit" class="btn btn-danger">Xóa nội dung đọc thử</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let chapterCount = parseInt('<%= previewContent.chapters.length %>');
+    const maxChapters = 5;
+    const minChapters = 3;
+    
+    const addBtn = document.getElementById('addChapter');
+    const removeBtn = document.getElementById('removeChapter');
+    const container = document.getElementById('chaptersContainer');
+    const countSpan = document.getElementById('chapterCount');
+    
+    function updateButtons() {
+        addBtn.disabled = chapterCount >= maxChapters;
+        removeBtn.disabled = chapterCount <= minChapters;
+        countSpan.textContent = chapterCount;
+    }
+    
+    addBtn.addEventListener('click', function() {
+        if (chapterCount < maxChapters) {
+            chapterCount++;
+            const chapterDiv = document.createElement('div');
+            chapterDiv.className = 'chapter-form mb-4 border rounded p-3';
+            chapterDiv.innerHTML = `
+                <h5>Chương ${chapterCount}</h5>
+                <div class="mb-3">
+                    <label class="form-label">Tiêu đề chương</label>
+                    <input type="text" class="form-control" name="chapters[${chapterCount-1}][title]" 
+                           placeholder="Nhập tiêu đề chương ${chapterCount}..." required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nội dung chương</label>
+                    <textarea class="form-control" name="chapters[${chapterCount-1}][content]" rows="10" 
+                              placeholder="Nhập nội dung chương ${chapterCount}..." required></textarea>
+                </div>
+            `;
+            container.appendChild(chapterDiv);
+            updateButtons();
+        }
+    });
+    
+    removeBtn.addEventListener('click', function() {
+        if (chapterCount > minChapters) {
+            const chapters = container.querySelectorAll('.chapter-form');
+            chapters[chapters.length - 1].remove();
+            chapterCount--;
+            updateButtons();
+        }
+    });
+    
+    updateButtons();
+});
+</script>
+
+<%- include('../partials/footer') %>
