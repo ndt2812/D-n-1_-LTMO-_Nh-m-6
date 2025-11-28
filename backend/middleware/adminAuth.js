@@ -22,6 +22,10 @@ exports.requireAdmin = (req, res, next) => {
     return;
   }
 
+  // Add current path to res.locals for sidebar active state
+  res.locals.currentPath = req.path;
+  res.locals.currentUser = req.user;
+
   next();
 };
 

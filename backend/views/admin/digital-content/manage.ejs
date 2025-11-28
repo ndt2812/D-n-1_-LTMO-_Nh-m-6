@@ -8,20 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .admin-sidebar {
-            background-color: #343a40;
-            min-height: 100vh;
-        }
-        .admin-sidebar .nav-link {
-            color: #adb5bd;
-        }
-        .admin-sidebar .nav-link:hover {
-            color: #fff;
-        }
-        .admin-sidebar .nav-link.active {
-            color: #fff;
-            background-color: #495057;
-        }
+        <%- include('../../partials/adminHeader') %>
         .feature-card {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
@@ -41,6 +28,15 @@
             padding: 1rem;
             margin-bottom: 1rem;
             border-radius: 8px;
+            background: #fafafa;
+        }
+        .chapter-input:hover {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+        .chapter-file-input {
+            font-size: 12px;
+            padding: 4px 8px;
         }
         .file-info {
             background: #f8f9fa;
@@ -48,53 +44,17 @@
             border-radius: 8px;
             border-left: 4px solid #007bff;
         }
+        .chapter-content-textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-2 admin-sidebar p-3">
-                <h4 class="text-white mb-4">
-                    <i class="fas fa-cog"></i> Admin Panel
-                </h4>
-                <nav class="nav flex-column">
-                    <a class="nav-link" href="/admin">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                    </a>
-                    <a class="nav-link" href="/admin/books">
-                        <i class="fas fa-book"></i> Quản lý sách
-                    </a>
-                    <a class="nav-link" href="/admin/inventory">
-                        <i class="fas fa-warehouse"></i> Quản lý kho hàng
-                    </a>
-                    <a class="nav-link active" href="/admin/digital-content">
-                        <i class="fas fa-tablet-alt"></i> Nội dung số
-                    </a>
-                    <a class="nav-link" href="/admin/promotions">
-                        <i class="fas fa-tags"></i> Mã khuyến mãi
-                    </a>
-                    <a class="nav-link" href="/admin/coin-transactions">
-                        <i class="fas fa-coins"></i> Giao dịch Coin
-                    </a>
-                    <a class="nav-link" href="/admin/users">
-                        <i class="fas fa-users"></i> Quản lý người dùng
-                    </a>
-                    <a class="nav-link" href="/admin/categories">
-                        <i class="fas fa-tags"></i> Quản lý danh mục
-                    </a>
-                    <a class="nav-link" href="/admin/reports">
-                        <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
-                    </a>
-                    <hr class="text-secondary">
-                    <a class="nav-link" href="/books">
-                        <i class="fas fa-home"></i> Về trang chủ
-                    </a>
-                    <a class="nav-link" href="/logout">
-                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                    </a>
-                </nav>
-            </div>
+            <%- include('../../partials/adminSidebar') %>
 
             <!-- Main Content -->
             <div class="col-md-10">
@@ -260,7 +220,7 @@
 
                     <form method="POST" action="/admin/digital-content/<%= book._id %>/preview" id="previewForm" onsubmit="return submitPreviewForm(event)">
                         <div class="mb-3">
-                            <label class="form-label">Nội dung preview (3-5 chương):</label>
+                            <label class="form-label">Nội dung preview (có thể thêm bao nhiêu chương cũng được):</label>
                             <div id="chaptersContainer">
                                 <% if (previewContent && previewContent.chapters) { %>
                                     <% previewContent.chapters.forEach((chapter, index) => { %>
@@ -273,7 +233,15 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label">Nội dung</label>
-                                                    <textarea class="form-control" name="chapters[<%= index %>][content]" 
+                                                    <div class="mb-2">
+                                                        <input type="file" class="form-control form-control-sm chapter-file-input" 
+                                                               accept=".txt,.md,.markdown,.html,.htm,.doc,.docx,.pdf,.rtf" 
+                                                               onchange="handleChapterFileUpload(this, <%= index %>)"
+                                                               style="font-size: 12px;">
+                                                        <small class="text-muted">Hoặc upload file (.txt, .md, .html, .doc, .docx, .pdf, .rtf)</small>
+                                                    </div>
+                                                    <textarea class="form-control chapter-content-textarea" 
+                                                              name="chapters[<%= index %>][content]" 
                                                               rows="4" required placeholder="Nhập nội dung chương..."><%= chapter.content %></textarea>
                                                 </div>
                                                 <div class="col-md-2">
@@ -297,7 +265,15 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label">Nội dung</label>
-                                                <textarea class="form-control" name="chapters[0][content]" 
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm chapter-file-input" 
+                                                           accept=".txt,.md,.markdown,.html,.htm,.doc,.docx,.pdf,.rtf" 
+                                                           onchange="handleChapterFileUpload(this, 0)"
+                                                           style="font-size: 12px;">
+                                                    <small class="text-muted">Hoặc upload file (.txt, .md, .html, .doc, .docx, .pdf, .rtf)</small>
+                                                </div>
+                                                <textarea class="form-control chapter-content-textarea" 
+                                                          name="chapters[0][content]" 
                                                           rows="4" required placeholder="Nhập nội dung chương..."></textarea>
                                             </div>
                                             <div class="col-md-2">
@@ -318,7 +294,15 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label">Nội dung</label>
-                                                <textarea class="form-control" name="chapters[1][content]" 
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm chapter-file-input" 
+                                                           accept=".txt,.md,.markdown,.html,.htm,.doc,.docx,.pdf,.rtf" 
+                                                           onchange="handleChapterFileUpload(this, 1)"
+                                                           style="font-size: 12px;">
+                                                    <small class="text-muted">Hoặc upload file (.txt, .md, .html, .doc, .docx, .pdf, .rtf)</small>
+                                                </div>
+                                                <textarea class="form-control chapter-content-textarea" 
+                                                          name="chapters[1][content]" 
                                                           rows="4" required placeholder="Nhập nội dung chương..."></textarea>
                                             </div>
                                             <div class="col-md-2">
@@ -339,7 +323,15 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label">Nội dung</label>
-                                                <textarea class="form-control" name="chapters[2][content]" 
+                                                <div class="mb-2">
+                                                    <input type="file" class="form-control form-control-sm chapter-file-input" 
+                                                           accept=".txt,.md,.markdown,.html,.htm,.doc,.docx,.pdf,.rtf" 
+                                                           onchange="handleChapterFileUpload(this, 2)"
+                                                           style="font-size: 12px;">
+                                                    <small class="text-muted">Hoặc upload file (.txt, .md, .html, .doc, .docx, .pdf, .rtf)</small>
+                                                </div>
+                                                <textarea class="form-control chapter-content-textarea" 
+                                                          name="chapters[2][content]" 
                                                           rows="4" required placeholder="Nhập nội dung chương..."></textarea>
                                             </div>
                                             <div class="col-md-2">
@@ -359,7 +351,7 @@
                             <button type="button" class="btn btn-outline-primary" onclick="addChapter()" id="addChapterBtn">
                                 <i class="fas fa-plus"></i> Thêm chương
                             </button>
-                            <small class="text-muted ms-2">Tối đa 5 chương, tối thiểu 3 chương</small>
+                            <small class="text-muted ms-2">Có thể thêm bao nhiêu chương cũng được (tối thiểu 1 chương)</small>
                         </div>
 
                         <button type="submit" class="btn btn-success">
@@ -410,14 +402,19 @@
         });
 
         function addChapter() {
-            if (chapterCount >= 5) {
-                alert('Tối đa 5 chương preview');
+            // Không giới hạn số chương - admin có thể thêm bao nhiêu chương cũng được
+            console.log('➕ Adding new chapter, current count:', chapterCount);
+
+            const container = document.getElementById('chaptersContainer');
+            if (!container) {
+                console.error('❌ Không tìm thấy chaptersContainer');
+                alert('Lỗi: Không tìm thấy container chương');
                 return;
             }
 
-            const container = document.getElementById('chaptersContainer');
             const newChapter = document.createElement('div');
             newChapter.className = 'chapter-input';
+            // Tạm thời dùng chapterCount để đặt name, sẽ được renumber lại sau
             newChapter.innerHTML = `
                 <div class="row">
                     <div class="col-md-4">
@@ -427,7 +424,15 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Nội dung</label>
-                        <textarea class="form-control" name="chapters[${chapterCount}][content]" 
+                        <div class="mb-2">
+                            <input type="file" class="form-control form-control-sm chapter-file-input" 
+                                   accept=".txt,.md,.markdown,.html,.htm,.doc,.docx,.pdf,.rtf" 
+                                   onchange="handleChapterFileUpload(this, ${chapterCount})"
+                                   style="font-size: 12px;">
+                            <small class="text-muted">Hoặc upload file (.txt, .md, .html, .doc, .docx, .pdf, .rtf)</small>
+                        </div>
+                        <textarea class="form-control chapter-content-textarea" 
+                                  name="chapters[${chapterCount}][content]" 
                                   rows="4" required placeholder="Nhập nội dung chương..."></textarea>
                     </div>
                     <div class="col-md-2">
@@ -441,9 +446,21 @@
             `;
             
             container.appendChild(newChapter);
-            chapterCount++;
+            chapterCount = document.querySelectorAll('.chapter-input').length;
+            console.log('✅ Chapter added, new count:', chapterCount);
+            
+            // Đánh số lại tất cả các chương
             renumberChapters();
             updateChapterControls();
+            
+            // Scroll đến chương mới để user dễ thấy
+            newChapter.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Focus vào input title của chương mới
+            const titleInput = newChapter.querySelector('input[type="text"]');
+            if (titleInput) {
+                setTimeout(() => titleInput.focus(), 100);
+            }
         }
 
         function removeChapter(button) {
@@ -480,8 +497,9 @@
             const chapters = document.querySelectorAll('.chapter-input');
             console.log(`📊 Tổng số chương hiện tại: ${chapters.length}`);
             
-            if (chapters.length <= 3) {
-                alert('Tối thiểu 3 chương preview');
+            // Chỉ cần ít nhất 1 chương
+            if (chapters.length <= 1) {
+                alert('Cần ít nhất 1 chương preview');
                 return;
             }
 
@@ -558,34 +576,41 @@
 
         function renumberChapters() {
             const chapters = document.querySelectorAll('.chapter-input');
+            console.log(`🔄 Renumbering ${chapters.length} chapters`);
+            
             chapters.forEach((chapter, index) => {
                 // Tìm tất cả các input và textarea trong chương này
                 const titleInput = chapter.querySelector('input[type="text"]');
-                const contentTextarea = chapter.querySelector('textarea');
+                const contentTextarea = chapter.querySelector('.chapter-content-textarea') || chapter.querySelector('textarea');
+                const fileInput = chapter.querySelector('.chapter-file-input') || chapter.querySelector('input[type="file"]');
                 const label = chapter.querySelector('label');
                 
                 // Cập nhật name attribute để form submit đúng (bắt đầu từ 0)
+                // Lưu ý: name attribute không quan trọng vì chúng ta dùng JSON submit
+                // nhưng vẫn cập nhật để nhất quán
                 if (titleInput) {
                     titleInput.name = `chapters[${index}][title]`;
                 }
                 if (contentTextarea) {
                     contentTextarea.name = `chapters[${index}][content]`;
                 }
-                if (label) {
+                // Cập nhật onchange cho file input với index mới
+                if (fileInput) {
+                    fileInput.setAttribute('onchange', `handleChapterFileUpload(this, ${index})`);
+                }
+                if (label && !label.textContent.includes('Nội dung')) {
                     label.textContent = `Tiêu đề chương ${index + 1}`;
                 }
             });
+            
+            console.log(`✅ Renumbered ${chapters.length} chapters`);
         }
 
         function updateChapterControls() {
             const addBtn = document.getElementById('addChapterBtn');
-            if (chapterCount >= 5) {
-                addBtn.disabled = true;
-                addBtn.innerHTML = '<i class="fas fa-plus"></i> Đã đạt tối đa (5 chương)';
-            } else {
-                addBtn.disabled = false;
-                addBtn.innerHTML = '<i class="fas fa-plus"></i> Thêm chương';
-            }
+            // Không giới hạn số chương - luôn enable button
+            addBtn.disabled = false;
+            addBtn.innerHTML = '<i class="fas fa-plus"></i> Thêm chương';
         }
 
         // Function để submit form với AJAX để đảm bảo chỉ gửi các chương còn lại
@@ -600,48 +625,64 @@
             const chapters = document.querySelectorAll('.chapter-input');
             console.log(`📊 Tổng số chương trong DOM: ${chapters.length}`);
             
-            // Validate số lượng chương
-            if (chapters.length < 3) {
-                alert('Preview cần ít nhất 3 chương');
+            // Validate số lượng chương - chỉ cần ít nhất 1 chương
+            if (chapters.length < 1) {
+                alert('Preview cần ít nhất 1 chương');
                 return false;
             }
-            if (chapters.length > 5) {
-                alert('Preview tối đa 5 chương');
-                return false;
-            }
+            // Không giới hạn số chương tối đa
+            
+            console.log(`📋 Bắt đầu thu thập dữ liệu từ ${chapters.length} chương trong DOM`);
             
             // Thu thập dữ liệu CHỈ từ các chương còn lại trong DOM
             // Lưu ý: Lấy theo thứ tự trong DOM, không phải theo name attribute
             const chaptersData = [];
             chapters.forEach((chapter, domIndex) => {
                 const titleInput = chapter.querySelector('input[type="text"]');
-                const contentTextarea = chapter.querySelector('textarea');
+                const contentTextarea = chapter.querySelector('.chapter-content-textarea') || chapter.querySelector('textarea');
                 
                 if (titleInput && contentTextarea) {
                     const title = titleInput.value.trim();
                     const content = contentTextarea.value.trim();
                     
-                    console.log(`Chương ${domIndex}: title="${title.substring(0, 30)}...", content length=${content.length}`);
+                    console.log(`Chương ${domIndex + 1}: title="${title.substring(0, 30)}...", content length=${content.length}`);
                     
-                    // Chỉ thêm nếu có cả title và content
+                    // Chỉ thêm nếu có cả title và content (không rỗng)
                     if (title && content) {
                         chaptersData.push({
                             title: title,
                             content: content
                         });
+                        console.log(`✅ Đã thêm chương ${domIndex + 1} vào danh sách gửi`);
                     } else {
-                        console.warn(`⚠️ Chương ${domIndex} bị bỏ qua vì thiếu title hoặc content`);
+                        console.warn(`⚠️ Chương ${domIndex + 1} bị bỏ qua vì thiếu title hoặc content (title: "${title}", content length: ${content.length})`);
+                        // Hiển thị cảnh báo cho user nếu chương bị bỏ qua
+                        if (!title || !content) {
+                            const chapterLabel = chapter.querySelector('label');
+                            const chapterTitle = chapterLabel ? chapterLabel.textContent : `Chương ${domIndex + 1}`;
+                            console.warn(`⚠️ ${chapterTitle} sẽ không được lưu vì thiếu thông tin`);
+                        }
                     }
                 } else {
-                    console.warn(`⚠️ Chương ${domIndex} không tìm thấy input hoặc textarea`);
+                    console.error(`❌ Chương ${domIndex + 1} không tìm thấy input hoặc textarea`);
+                    console.error('Title input:', titleInput);
+                    console.error('Content textarea:', contentTextarea);
                 }
             });
             
-            console.log(`📦 Số chương hợp lệ để gửi: ${chaptersData.length}`);
+            console.log(`📦 Số chương hợp lệ để gửi: ${chaptersData.length} / ${chapters.length} chương trong DOM`);
             
-            if (chaptersData.length < 3) {
-                alert(`Preview cần ít nhất 3 chương có đầy đủ tiêu đề và nội dung. Hiện tại có ${chaptersData.length} chương hợp lệ.`);
+            if (chaptersData.length < 1) {
+                alert(`Preview cần ít nhất 1 chương có đầy đủ tiêu đề và nội dung. Hiện tại có ${chaptersData.length} chương hợp lệ trong số ${chapters.length} chương.`);
                 return false;
+            }
+            
+            // Cảnh báo nếu có chương bị bỏ qua
+            if (chaptersData.length < chapters.length) {
+                const skipped = chapters.length - chaptersData.length;
+                if (!confirm(`Có ${skipped} chương chưa có đầy đủ thông tin sẽ không được lưu. Bạn có muốn tiếp tục không?`)) {
+                    return false;
+                }
             }
             
             // Lấy bookId từ form
@@ -654,6 +695,7 @@
             };
             
             console.log(`📤 Submitting ${chaptersData.length} chapters to server as JSON:`, requestBody);
+            console.log(`📋 Chi tiết các chương:`, chaptersData.map((ch, idx) => `${idx + 1}. "${ch.title.substring(0, 30)}..." (${ch.content.length} ký tự)`));
             
             // Gửi bằng fetch API với JSON
             fetch(`/admin/digital-content/${bookId}/preview`, {
@@ -666,31 +708,75 @@
             })
             .then(response => {
                 console.log('📥 Server response status:', response.status);
+                console.log('📥 Server response headers:', response.headers);
+                
+                // Kiểm tra content type
+                const contentType = response.headers.get('content-type');
+                console.log('📥 Content-Type:', contentType);
+                
                 if (response.redirected) {
                     console.log('✅ Server redirecting to:', response.url);
-                    // Server redirect về trang manage
+                    // Server redirect về trang manage (thường là thành công)
                     window.location.href = response.url;
                 } else if (response.ok) {
-                    return response.json().then(data => {
-                        console.log('✅ Server response:', data);
-                        window.location.href = `/admin/digital-content/${bookId}/manage`;
-                    }).catch(() => {
-                        // Nếu không parse được JSON, thử text
+                    // Nếu response là JSON
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json().then(data => {
+                            console.log('✅ Server response (JSON):', data);
+                            if (data.success !== false) {
+                                alert(`✅ Đã lưu thành công ${chaptersData.length} chương!`);
+                                window.location.href = `/admin/digital-content/${bookId}/manage`;
+                            } else {
+                                alert('❌ Lỗi: ' + (data.error || data.message || 'Không thể lưu preview'));
+                            }
+                        }).catch(err => {
+                            console.error('❌ Error parsing JSON:', err);
+                            return response.text().then(text => {
+                                console.log('Server response (text):', text);
+                                window.location.href = `/admin/digital-content/${bookId}/manage`;
+                            });
+                        });
+                    } else {
+                        // Nếu response là HTML (redirect hoặc error page)
                         return response.text().then(text => {
-                            console.log('Server response (text):', text);
+                            console.log('Server response (HTML/text):', text.substring(0, 500));
+                            // Nếu có chứa error message, hiển thị
+                            if (text.includes('error') || text.includes('lỗi')) {
+                                alert('⚠️ Có thể có lỗi xảy ra. Vui lòng kiểm tra lại.');
+                            }
                             window.location.href = `/admin/digital-content/${bookId}/manage`;
                         });
-                    });
+                    }
                 } else {
+                    // Response không OK (4xx, 5xx)
+                    console.error('❌ Server returned error status:', response.status);
                     return response.text().then(text => {
                         console.error('❌ Server error response:', text);
-                        alert('Có lỗi xảy ra khi lưu preview: ' + text);
+                        let errorMsg = 'Có lỗi xảy ra khi lưu preview';
+                        try {
+                            // Thử parse JSON error
+                            const errorData = JSON.parse(text);
+                            errorMsg = errorData.error || errorData.message || errorData.details || errorMsg;
+                            console.error('❌ Parsed error data:', errorData);
+                        } catch (e) {
+                            // Nếu không phải JSON, lấy text
+                            console.error('❌ Error response is not JSON, raw text:', text);
+                            if (text.length < 500) {
+                                errorMsg = text;
+                            } else {
+                                errorMsg = text.substring(0, 200) + '...';
+                            }
+                        }
+                        alert('❌ Lỗi: ' + errorMsg + '\n\nVui lòng kiểm tra console để xem chi tiết.');
+                    }).catch(err => {
+                        console.error('❌ Error reading error response:', err);
+                        alert('❌ Có lỗi xảy ra khi đọc phản hồi từ server. Vui lòng kiểm tra console.');
                     });
                 }
             })
             .catch(error => {
                 console.error('❌ Error submitting form:', error);
-                alert('Có lỗi xảy ra: ' + error.message);
+                alert('❌ Có lỗi xảy ra khi gửi dữ liệu: ' + error.message);
             });
             
             return false;
@@ -698,6 +784,110 @@
 
         // Initialize controls
         updateChapterControls();
+
+        // Hàm xử lý upload file cho từng chương
+        function handleChapterFileUpload(input, chapterIndex) {
+            const file = input.files[0];
+            if (!file) {
+                return;
+            }
+
+            console.log(`📄 Uploading file for chapter ${chapterIndex + 1}:`, file.name, file.type, file.size);
+
+            // Tìm textarea tương ứng
+            const chapterElement = input.closest('.chapter-input');
+            if (!chapterElement) {
+                console.error('❌ Không tìm thấy chapter element');
+                alert('Lỗi: Không tìm thấy chương tương ứng');
+                return;
+            }
+
+            const textarea = chapterElement.querySelector('.chapter-content-textarea');
+            if (!textarea) {
+                console.error('❌ Không tìm thấy textarea');
+                alert('Lỗi: Không tìm thấy textarea để điền nội dung');
+                return;
+            }
+
+            // Kiểm tra kích thước file (10MB)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                alert('File quá lớn. Kích thước tối đa là 10MB.');
+                input.value = '';
+                return;
+            }
+
+            // Hiển thị loading
+            const originalPlaceholder = textarea.placeholder;
+            textarea.placeholder = 'Đang upload và đọc file...';
+            textarea.disabled = true;
+            input.disabled = true;
+
+            // Tạo FormData để upload file
+            const formData = new FormData();
+            formData.append('chapterFile', file);
+
+            // Upload file lên server
+            fetch('/admin/api/digital-content/upload-chapter-file', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('📥 Server response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                input.disabled = false;
+                
+                if (data.success && data.content) {
+                    // Điền nội dung vào textarea
+                    textarea.value = data.content;
+                    textarea.disabled = false;
+                    textarea.placeholder = originalPlaceholder;
+
+                    console.log(`✅ Đã đọc file thành công, nội dung: ${data.content.length} ký tự`);
+                    
+                    // Thông báo thành công
+                    const successMsg = document.createElement('small');
+                    successMsg.className = 'text-success';
+                    successMsg.textContent = `✓ Đã tải nội dung từ file "${data.fileName}" (${data.fileSize} ký tự)`;
+                    successMsg.style.display = 'block';
+                    successMsg.style.marginTop = '4px';
+                    
+                    // Xóa thông báo cũ nếu có
+                    const oldMsg = input.parentElement.querySelector('.text-success');
+                    if (oldMsg) {
+                        oldMsg.remove();
+                    }
+                    
+                    input.parentElement.appendChild(successMsg);
+                    
+                    // Tự động ẩn sau 5 giây
+                    setTimeout(() => {
+                        if (successMsg.parentElement) {
+                            successMsg.style.opacity = '0';
+                            successMsg.style.transition = 'opacity 0.5s';
+                            setTimeout(() => successMsg.remove(), 500);
+                        }
+                    }, 5000);
+                } else {
+                    // Lỗi từ server
+                    const errorMsg = data.error || 'Không thể đọc file';
+                    alert('❌ Lỗi: ' + errorMsg);
+                    textarea.disabled = false;
+                    textarea.placeholder = originalPlaceholder;
+                    input.value = '';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error uploading file:', error);
+                alert('❌ Lỗi khi upload file: ' + error.message);
+                textarea.disabled = false;
+                textarea.placeholder = originalPlaceholder;
+                input.disabled = false;
+                input.value = '';
+            });
+        }
     </script>
 </body>
 </html>

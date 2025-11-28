@@ -4,6 +4,7 @@ const adminController = require('../controllers/adminController');
 const inventoryController = require('../controllers/inventoryController');
 const promotionController = require('../controllers/promotionController');
 const digitalContentController = require('../controllers/digitalContentController');
+const uploadChapterFileMiddleware = digitalContentController.uploadChapterFileMiddleware;
 const coinTransactionController = require('../controllers/coinTransactionController');
 const { requireAdmin } = require('../middleware/adminAuth');
 const upload = require('../middleware/upload');
@@ -64,6 +65,7 @@ router.post('/digital-content/:id/delete-preview', digitalContentController.dele
 router.post('/digital-content/:id/delete-file', digitalContentController.deleteDigitalFile);
 router.post('/digital-content/bulk-update', digitalContentController.bulkUpdateDigitalStatus);
 router.get('/api/digital-content/:id/preview', digitalContentController.getPreviewAPI);
+router.post('/api/digital-content/upload-chapter-file', uploadChapterFileMiddleware, digitalContentController.uploadChapterFile);
 
 // ===== COIN TRANSACTION MANAGEMENT =====
 router.get('/coin-transactions', coinTransactionController.getCoinTransactions);

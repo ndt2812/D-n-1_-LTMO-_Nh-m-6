@@ -210,9 +210,9 @@ if (!previewContent) {
             const { bookId } = req.params;
             const { chapters } = req.body;
 
-            // Validate input
-            if (!chapters || !Array.isArray(chapters) || chapters.length < 3 || chapters.length > 5) {
-                req.flash('error', 'Nội dung đọc thử phải có từ 3 đến 5 chương');
+            // Validate input - không giới hạn số chương, chỉ cần có ít nhất 1 chương
+            if (!chapters || !Array.isArray(chapters) || chapters.length < 1) {
+                req.flash('error', 'Nội dung đọc thử phải có ít nhất 1 chương');
                 return res.redirect(`/books/${bookId}/preview/new`);
             }
 
@@ -295,9 +295,9 @@ if (!previewContent) {
             const { bookId } = req.params;
             const { chapters, isActive } = req.body;
 
-            // Validate input
-            if (!chapters || !Array.isArray(chapters) || chapters.length < 3 || chapters.length > 5) {
-                req.flash('error', 'Nội dung đọc thử phải có từ 3 đến 5 chương');
+            // Validate input - không giới hạn số chương, chỉ cần có ít nhất 1 chương
+            if (!chapters || !Array.isArray(chapters) || chapters.length < 1) {
+                req.flash('error', 'Nội dung đọc thử phải có ít nhất 1 chương');
                 return res.redirect(`/books/${bookId}/preview/edit`);
             }
 
@@ -422,6 +422,14 @@ if (!previewContent) {
     getPreviewContentApi: async (req, res) => {
         try {
             const { bookId } = req.params;
+            const userId = req.user ? (req.user._id || req.user.id) : null;
+            
+            // Check if user has access to full content
+            let hasFullAccess = false;
+            if (userId) {
+                const BookAccess = require('../models/BookAccess');
+                hasFullAccess = await BookAccess.hasAccess(userId, bookId);
+            }
             
             // Tìm preview content với populate book
             let previewContent = await PreviewContent.findOne({ book: bookId })
@@ -437,9 +445,17 @@ if (!previewContent) {
                     });
                 }
 
+                // Nếu user đã mua, trả về tất cả chương
+                // Nếu chưa mua, chỉ trả về 3-5 chương đầu
+                if (!hasFullAccess && fallback.chapters && fallback.chapters.length > 5) {
+                    fallback.chapters = fallback.chapters.slice(0, 5);
+                    fallback.totalChapters = fallback.chapters.length;
+                }
+
                 return res.json({
                     success: true,
-                    preview: fallback
+                    preview: fallback,
+                    hasFullAccess
                 });
             }
 
@@ -462,16 +478,30 @@ if (!previewContent) {
                 author: ''
             };
 
+            // Lấy tất cả chương
+            let chapters = previewContent.chapters.map(chapter => ({
+                chapterNumber: chapter.chapterNumber,
+                title: chapter.title || '',
+                content: chapter.content || ''
+            }));
+
+            // Nếu user chưa mua, chỉ trả về 3-5 chương đầu (ưu tiên 5 chương)
+            const PREVIEW_CHAPTER_LIMIT = 5;
+            const totalChaptersInDB = previewContent.totalChapters || previewContent.chapters.length;
+            
+            if (!hasFullAccess && chapters.length > PREVIEW_CHAPTER_LIMIT) {
+                chapters = chapters.slice(0, PREVIEW_CHAPTER_LIMIT);
+            }
+
             res.json({
                 success: true,
                 preview: {
                     book: bookInfo,
-                    totalChapters: previewContent.totalChapters || previewContent.chapters.length,
-                    chapters: previewContent.chapters.map(chapter => ({
-                        chapterNumber: chapter.chapterNumber,
-                        title: chapter.title || '',
-                        content: chapter.content || ''
-                    }))
+                    totalChapters: hasFullAccess ? totalChaptersInDB : chapters.length, // Hiển thị tổng số chương thực tế nếu đã mua
+                    totalChaptersInDB: totalChaptersInDB, // Tổng số chương trong DB
+                    chapters: chapters,
+                    hasFullAccess: hasFullAccess,
+                    isPreview: !hasFullAccess && totalChaptersInDB > chapters.length // Đánh dấu đây là preview
                 }
             });
         } catch (error) {

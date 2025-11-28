@@ -28,9 +28,9 @@ const previewContentSchema = new mongoose.Schema({
     }],
     totalChapters: {
         type: Number,
-        min: 3,
-        max: 5,
-        default: 3
+        min: 1, // Tối thiểu 1 chương
+        default: 1
+        // Không giới hạn số chương tối đa
     },
     isActive: {
         type: Boolean,
@@ -48,10 +48,11 @@ const previewContentSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Validate that we have between 3-5 chapters
+// Validate that we have at least 1 chapter
 previewContentSchema.pre('save', function(next) {
-    if (this.chapters.length < 3 || this.chapters.length > 5) {
-        return next(new Error('Preview content must contain between 3 to 5 chapters'));
+    // Chỉ cần ít nhất 1 chương, không giới hạn số chương tối đa
+    if (this.chapters.length < 1) {
+        return next(new Error('Preview content must contain at least 1 chapter'));
     }
     
     // Calculate word count for each chapter

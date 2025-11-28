@@ -38,6 +38,42 @@ const upload = multer({
   }
 });
 
+// Multer config cho chapter file upload (hỗ trợ nhiều loại file hơn)
+// Tạo thư mục trước (sync)
+const chapterFilesDir = path.join(__dirname, '../public/uploads/chapter-files/');
+const fsSync = require('fs');
+if (!fsSync.existsSync(chapterFilesDir)) {
+  fsSync.mkdirSync(chapterFilesDir, { recursive: true });
+}
+
+const chapterFileStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, chapterFilesDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'chapter-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadChapterFile = multer({
+  storage: chapterFileStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit cho chapter file
+  },
+  fileFilter: function (req, file, cb) {
+    // Chấp nhận nhiều loại file
+    const allowedExtensions = ['.txt', '.md', '.markdown', '.html', '.htm', '.doc', '.docx', '.pdf', '.rtf'];
+    const fileExt = path.extname(file.originalname).toLowerCase();
+    
+    if (allowedExtensions.includes(fileExt)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File ${fileExt} chưa được hỗ trợ. Chỉ hỗ trợ: ${allowedExtensions.join(', ')}`));
+    }
+  }
+});
+
 const digitalContentController = {
   // Hiển thị danh sách nội dung số
   getDigitalContents: async (req, res) => {
@@ -271,13 +307,27 @@ const digitalContentController = {
   updatePreviewContent: async (req, res) => {
     const { id } = req.params;
     
+    console.log('🚀 updatePreviewContent called for book:', id);
+    console.log('📥 Request method:', req.method);
+    console.log('📥 Content-Type:', req.headers['content-type']);
+    console.log('📥 Request body:', req.body);
+    console.log('📥 Request body type:', typeof req.body);
+    console.log('📥 Request body keys:', Object.keys(req.body || {}));
+    
     try {
       const { chapters } = req.body;
 
       console.log('📥 Received request body:', JSON.stringify(req.body, null, 2));
       console.log('📥 Received chapters data:', chapters);
       console.log('📥 Chapters type:', Array.isArray(chapters) ? 'Array' : typeof chapters);
-      console.log('📥 Chapters length:', Array.isArray(chapters) ? chapters.length : Object.keys(chapters || {}).length);
+      if (Array.isArray(chapters)) {
+        console.log('📥 Chapters array length:', chapters.length);
+      } else if (chapters && typeof chapters === 'object') {
+        console.log('📥 Chapters object keys:', Object.keys(chapters));
+        console.log('📥 Chapters object keys length:', Object.keys(chapters).length);
+      } else {
+        console.log('📥 Chapters is:', chapters);
+      }
 
       if (!chapters) {
         req.flash('error_msg', 'Không nhận được dữ liệu chương. Vui lòng thử lại.');
@@ -346,8 +396,10 @@ const digitalContentController = {
         title: ch.title.substring(0, 30) 
       })), null, 2));
 
-      if (chaptersData.length < 3 || chaptersData.length > 5) {
-        req.flash('error_msg', `Preview phải có từ 3 đến 5 chương. Hiện tại có ${chaptersData.length} chương.`);
+      // Không giới hạn số chương - admin có thể thêm bao nhiêu chương cũng được
+      // Chỉ cần có ít nhất 1 chương
+      if (chaptersData.length < 1) {
+        req.flash('error_msg', `Preview phải có ít nhất 1 chương. Hiện tại có ${chaptersData.length} chương.`);
         return res.redirect(`/admin/digital-content/${id}/manage`);
       }
 
@@ -368,33 +420,63 @@ const digitalContentController = {
         });
       }
 
-      await previewContent.save();
+      console.log(`💾 Attempting to save ${chaptersData.length} chapters to database...`);
+      
+      try {
+        await previewContent.save();
+        console.log(`✅ Preview content saved successfully`);
+      } catch (saveError) {
+        console.error('❌ Error saving preview content:', saveError);
+        throw saveError;
+      }
       
       // Verify lại sau khi save
       const verifyContent = await PreviewContent.findOne({ book: id });
+      if (!verifyContent) {
+        console.error('❌ ERROR: Preview content not found after save!');
+        throw new Error('Không tìm thấy preview content sau khi lưu');
+      }
+      
       console.log(`✅ Saved preview content for book ${id}:`);
       console.log(`   - Total chapters in DB: ${verifyContent.totalChapters}`);
-      console.log(`   - Chapters array length: ${verifyContent.chapters.length}`);
-      console.log(`   - Chapter numbers:`, verifyContent.chapters.map(ch => ch.chapterNumber));
-
-      // Verify saved data
-      const savedPreview = await PreviewContent.findOne({ book: id });
-      console.log(`Saved preview content for book ${id}:`);
-      console.log(`- Total chapters saved: ${savedPreview.totalChapters}`);
-      console.log(`- Chapters array length: ${savedPreview.chapters.length}`);
-      console.log(`- Chapters:`, savedPreview.chapters.map(ch => ({ 
-        number: ch.chapterNumber, 
-        title: ch.title?.substring(0, 30) 
-      })));
+      console.log(`   - Chapters array length: ${verifyContent.chapters ? verifyContent.chapters.length : 0}`);
+      if (verifyContent.chapters && verifyContent.chapters.length > 0) {
+        console.log(`   - Chapter numbers:`, verifyContent.chapters.map(ch => ch.chapterNumber));
+        console.log(`   - First chapter title:`, verifyContent.chapters[0].title?.substring(0, 50));
+      }
 
       // Cập nhật book hasPreview = true
       book.hasPreview = true;
       await book.save();
+      console.log(`✅ Book hasPreview updated to true`);
 
+      // Kiểm tra nếu request là JSON (từ AJAX)
+      if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+        console.log('📤 Sending JSON response');
+        return res.json({
+          success: true,
+          message: `Đã cập nhật nội dung preview cho "${book.title}" (${chaptersData.length} chương)`,
+          chaptersCount: chaptersData.length,
+          totalChapters: verifyContent.totalChapters
+        });
+      }
+
+      // Nếu không phải JSON, redirect như bình thường
       req.flash('success_msg', `Đã cập nhật nội dung preview cho "${book.title}" (${chaptersData.length} chương)`);
       res.redirect(`/admin/digital-content/${id}/manage`);
     } catch (error) {
-      console.error('Error in updatePreviewContent:', error);
+      console.error('❌ Error in updatePreviewContent:', error);
+      console.error('❌ Error stack:', error.stack);
+      
+      // Kiểm tra nếu request là JSON (từ AJAX)
+      if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+        return res.status(400).json({
+          success: false,
+          error: error.message || 'Có lỗi xảy ra khi cập nhật preview',
+          details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+      }
+      
       req.flash('error_msg', error.message || 'Có lỗi xảy ra khi cập nhật preview');
       res.redirect(`/admin/digital-content/${id}/manage`);
     }
@@ -539,7 +621,115 @@ const digitalContentController = {
       console.error('Error in getPreviewAPI:', error);
       res.status(500).json({ error: 'Có lỗi xảy ra' });
     }
+  },
+
+  // API để upload và đọc file nội dung chương
+  uploadChapterFile: async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          error: 'Không có file được upload'
+        });
+      }
+
+      const file = req.file;
+      const filePath = file.path;
+      const fileName = file.originalname;
+      const fileExt = path.extname(fileName).toLowerCase();
+
+      console.log(`📄 Processing uploaded file: ${fileName}, extension: ${fileExt}`);
+
+      let content = '';
+
+      try {
+        // Đọc file dựa trên extension
+        if (fileExt === '.txt') {
+          // File text - đọc trực tiếp
+          content = await fs.readFile(filePath, 'utf-8');
+          console.log(`✅ Read .txt file: ${content.length} characters`);
+        } else if (fileExt === '.md' || fileExt === '.markdown') {
+          // Markdown file
+          content = await fs.readFile(filePath, 'utf-8');
+          console.log(`✅ Read .md file: ${content.length} characters`);
+        } else if (fileExt === '.html' || fileExt === '.htm') {
+          // HTML file - đọc và có thể strip tags sau
+          const htmlContent = await fs.readFile(filePath, 'utf-8');
+          // Đơn giản: strip HTML tags (có thể cải thiện sau)
+          content = htmlContent.replace(/<[^>]*>/g, '').trim();
+          console.log(`✅ Read .html file: ${content.length} characters`);
+        } else if (fileExt === '.docx') {
+          // DOCX file - cần thư viện mammoth hoặc docx
+          // Tạm thời thông báo cần cài thư viện
+          await fs.unlink(filePath); // Xóa file tạm
+          return res.status(400).json({
+            success: false,
+            error: 'File .docx chưa được hỗ trợ. Vui lòng chuyển đổi sang .txt hoặc copy nội dung vào textarea.'
+          });
+        } else if (fileExt === '.doc') {
+          // DOC file - khó đọc, cần thư viện đặc biệt
+          await fs.unlink(filePath);
+          return res.status(400).json({
+            success: false,
+            error: 'File .doc chưa được hỗ trợ. Vui lòng chuyển đổi sang .txt hoặc .docx trước.'
+          });
+        } else if (fileExt === '.pdf') {
+          // PDF file - cần thư viện pdf-parse
+          await fs.unlink(filePath);
+          return res.status(400).json({
+            success: false,
+            error: 'File .pdf chưa được hỗ trợ. Vui lòng chuyển đổi sang .txt hoặc copy nội dung vào textarea.'
+          });
+        } else {
+          // Thử đọc như text file
+          try {
+            content = await fs.readFile(filePath, 'utf-8');
+            console.log(`✅ Read file as text: ${content.length} characters`);
+          } catch (textError) {
+            await fs.unlink(filePath);
+            return res.status(400).json({
+              success: false,
+              error: `Không thể đọc file ${fileExt}. Chỉ hỗ trợ file text (.txt, .md, .html)`
+            });
+          }
+        }
+
+        // Xóa file tạm sau khi đọc
+        await fs.unlink(filePath);
+
+        res.json({
+          success: true,
+          content: content,
+          fileName: fileName,
+          fileSize: content.length
+        });
+
+      } catch (readError) {
+        // Xóa file tạm nếu có lỗi
+        try {
+          await fs.unlink(filePath);
+        } catch (unlinkError) {
+          console.error('Error deleting temp file:', unlinkError);
+        }
+
+        console.error('Error reading file:', readError);
+        return res.status(500).json({
+          success: false,
+          error: 'Lỗi khi đọc file: ' + readError.message
+        });
+      }
+
+    } catch (error) {
+      console.error('Error in uploadChapterFile:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Có lỗi xảy ra khi xử lý file: ' + error.message
+      });
+    }
   }
 };
 
+// Export multer middleware và controller
+const uploadChapterFileMiddleware = uploadChapterFile.single('chapterFile');
 module.exports = digitalContentController;
+module.exports.uploadChapterFileMiddleware = uploadChapterFileMiddleware;

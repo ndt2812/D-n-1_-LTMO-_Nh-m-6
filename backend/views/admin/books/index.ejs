@@ -8,14 +8,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        <%- include('../../partials/adminHeader') %>
         :root {
             --primary-blue: #2563eb;
             --secondary-blue: #3b82f6;
             --success-green: #10b981;
             --warning-orange: #f59e0b;
             --danger-red: #ef4444;
-            --sidebar-bg: #1e293b;
-            --sidebar-hover: #334155;
         }
 
         body {
@@ -23,96 +22,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* Sidebar Styles */
-        .admin-sidebar {
-            background-color: var(--sidebar-bg);
-            min-height: 100vh;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .admin-sidebar .admin-header {
-            padding: 20px;
-            border-bottom: 1px solid #334155;
-            background-color: #0f172a;
-        }
-
-        .admin-sidebar .admin-header h4 {
-            color: #fff;
-            margin: 0;
-            font-weight: 600;
-            font-size: 1.25rem;
-        }
-
-        .admin-sidebar .nav-link {
-            color: #cbd5e1;
-            padding: 12px 20px;
-            border-radius: 0;
-            transition: all 0.3s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .admin-sidebar .nav-link:hover {
-            color: #fff;
-            background-color: var(--sidebar-hover);
-            border-left-color: var(--primary-blue);
-            transform: translateX(3px);
-        }
-
-        .admin-sidebar .nav-link.active {
-            color: #fff;
-            background-color: var(--primary-blue);
-            border-left-color: #60a5fa;
-            font-weight: 500;
-        }
-
-        .admin-sidebar .nav-link i {
-            width: 20px;
-            text-align: center;
-            margin-right: 10px;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 250px;
-            padding: 0;
-            min-height: 100vh;
-        }
-
-        /* Header */
-        .content-header {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
-            color: white;
-            padding: 25px 30px;
-            border-bottom: 4px solid #1d4ed8;
-        }
-
-        .content-header h1 {
-            margin: 0;
-            font-size: 1.75rem;
-            font-weight: 600;
-        }
-
-        .breadcrumb-nav {
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-
         /* Cards and Components */
-        .stats-cards {
-            padding: 30px;
-            margin-top: -30px;
-            position: relative;
-            z-index: 100;
-        }
-
         .stat-card {
             background: white;
             border-radius: 15px;
@@ -342,159 +252,84 @@
             border-color: var(--primary-blue);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .admin-sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="admin-sidebar">
-        <div class="admin-header">
-            <h4>
-                <i class="fas fa-cog"></i> Admin Panel
-            </h4>
-        </div>
-        <nav class="nav flex-column py-3">
-            <a class="nav-link" href="/admin">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
-            </a>
-            <a class="nav-link active" href="/admin/books">
-                <i class="fas fa-book"></i> Quản lý sách
-            </a>
-            <a class="nav-link" href="/admin/inventory">
-                <i class="fas fa-warehouse"></i> Quản lý kho hàng
-            </a>
-            <a class="nav-link" href="/admin/digital-content">
-                <i class="fas fa-tablet-alt"></i> Nội dung số
-            </a>
-            <a class="nav-link" href="/admin/promotions">
-                <i class="fas fa-tags"></i> Mã khuyến mãi
-            </a>
-            <a class="nav-link" href="/admin/coin-transactions">
-                <i class="fas fa-coins"></i> Giao dịch Coin
-            </a>
-            <a class="nav-link" href="/admin/users">
-                <i class="fas fa-users"></i> Quản lý người dùng
-            </a>
-            <a class="nav-link" href="/admin/categories">
-                <i class="fas fa-list-alt"></i> Quản lý danh mục
-            </a>
-            <a class="nav-link" href="/admin/orders">
-                <i class="fas fa-shopping-cart"></i> Đơn hàng
-            </a>
-            <a class="nav-link" href="/admin/reports">
-                <i class="fas fa-chart-line"></i> Báo cáo & Thống kê
-            </a>
-            <hr style="border-color: #334155; margin: 20px;">
-            <a class="nav-link" href="/books">
-                <i class="fas fa-home"></i> Về trang chủ
-            </a>
-            <a class="nav-link" href="/logout">
-                <i class="fas fa-sign-out-alt"></i> Đăng xuất
-            </a>
-        </nav>
-    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <%- include('../../partials/adminSidebar') %>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="content-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1><i class="fas fa-book"></i> Quản lý sách</h1>
-                    <div class="breadcrumb-nav mt-2">
-                        <i class="fas fa-home"></i> Trang chủ > <i class="fas fa-book"></i> Quản lý sách
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                    <h1><%= title %></h1>
+                    <div>
+                        <a href="/admin/books/create" class="btn btn-primary me-2">
+                            <i class="fas fa-plus"></i> Thêm sách mới
+                        </a>
+                        <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
                     </div>
                 </div>
-                <div class="text-end">
-                    <a href="/admin/books/create" class="btn btn-light btn-lg me-3">
-                        <i class="fas fa-plus"></i> Thêm sách mới
-                    </a>
-                    <div class="mt-2">
-                        <span class="badge bg-light text-dark px-3 py-2">
-                            <i class="fas fa-user"></i> Đang xem
-                        </span>
+
+                <!-- Flash Messages -->
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show mt-3">
+                        <%= success_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                </div>
-            </div>
-        </div>
+                <% } %>
 
-        <!-- Flash Messages -->
-        <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
-            <div class="alert alert-success alert-dismissible fade show mx-4 mt-3">
-                <%= success_msg %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% } %>
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show mt-3">
+                        <%= error_msg %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
 
-        <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
-            <div class="alert alert-danger alert-dismissible fade show mx-4 mt-3">
-                <%= error_msg %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <% } %>
-
-        <!-- Statistics Cards -->
-        <div class="stats-cards">
-            <div class="row g-4">
-                <div class="col-md-3">
-                    <div class="stat-card books">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="stat-number"><%= totalBooks %></h2>
-                                <p class="stat-label">Tổng số sách</p>
+                <!-- Statistics Cards -->
+                <div class="row mt-4 g-3">
+                    <div class="col-md-3">
+                        <div class="card stats-card" style="background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                            <div class="card-body">
+                                <h6 class="text-uppercase mb-1">Tổng số sách</h6>
+                                <h2 class="fw-bold"><%= totalBooks %></h2>
+                                <p class="mb-0"><i class="fas fa-book me-2"></i>Tất cả sách</p>
                             </div>
-                            <i class="fas fa-book stat-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stats-card" style="background: linear-gradient(135deg,#43e97b 0%,#38f9d7 100%);">
+                            <div class="card-body">
+                                <h6 class="text-uppercase mb-1">Tổng danh mục</h6>
+                                <h2 class="fw-bold"><%= categories.length %></h2>
+                                <p class="mb-0"><i class="fas fa-tags me-2"></i>Danh mục sách</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stats-card" style="background: linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);">
+                            <div class="card-body">
+                                <h6 class="text-uppercase mb-1">Tổng số trang</h6>
+                                <h2 class="fw-bold"><%= totalPages %></h2>
+                                <p class="mb-0"><i class="fas fa-file-alt me-2"></i>Trang <%= currentPage %> / <%= totalPages %></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stats-card" style="background: linear-gradient(135deg,#f093fb 0%,#f5576c 100%);">
+                            <div class="card-body">
+                                <h6 class="text-uppercase mb-1">Trang hiện tại</h6>
+                                <h2 class="fw-bold"><%= currentPage %></h2>
+                                <p class="mb-0"><i class="fas fa-bookmark me-2"></i>Hiển thị <%= books.length %> sách</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stat-card categories">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="stat-number"><%= categories.length %></h2>
-                                <p class="stat-label">Tổng danh mục</p>
-                            </div>
-                            <i class="fas fa-tags stat-icon"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card pages">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="stat-number"><%= totalPages %></h2>
-                                <p class="stat-label">Tổng số trang</p>
-                            </div>
-                            <i class="fas fa-file-alt stat-icon"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card current">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="stat-number"><%= currentPage %></h2>
-                                <p class="stat-label">Trang hiện tại</p>
-                            </div>
-                            <i class="fas fa-bookmark stat-icon"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Filters -->
-        <div class="filters-section">
-            <div class="filter-card">
+                <!-- Filters -->
+                <div class="card mt-4">
+                    <div class="card-body">
                 <form method="GET" class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Tìm kiếm</label>
@@ -522,21 +357,16 @@
             </div>
         </div>
 
-        <!-- Book Table -->
-        <div class="table-section">
-            <div class="table-card">
-                <div class="table-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5>Danh sách sách</h5>
-                        <a href="/admin/books/create" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Thêm mới
-                        </a>
+                <!-- Book Table -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Danh sách sách</h5>
                     </div>
-                </div>
+                    <div class="card-body p-0">
                 
-                <% if (books.length > 0) { %>
-                    <div class="table-responsive">
-                        <table class="table custom-table">
+                        <% if (books.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>STT</th>
@@ -629,42 +459,42 @@
                             <i class="fas fa-plus"></i> Thêm sách đầu tiên
                         </a>
                     </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <% if (totalPages > 1) { %>
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <% if (currentPage > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= searchQuery %>&category=<%= categoryFilter %>">
+                                        <i class="fas fa-chevron-left"></i> Trước
+                                    </a>
+                                </li>
+                            <% } %>
+                            
+                            <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= i %>&search=<%= searchQuery %>&category=<%= categoryFilter %>">
+                                        <%= i %>
+                                    </a>
+                                </li>
+                            <% } %>
+                            
+                            <% if (currentPage < totalPages) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= searchQuery %>&category=<%= categoryFilter %>">
+                                        Sau <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </nav>
                 <% } %>
             </div>
         </div>
-
-        <!-- Pagination -->
-        <% if (totalPages > 1) { %>
-            <div class="d-flex justify-content-center">
-                <nav>
-                    <ul class="pagination">
-                        <% if (currentPage > 1) { %>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= searchQuery %>&category=<%= categoryFilter %>">
-                                    <i class="fas fa-chevron-left"></i> Trước
-                                </a>
-                            </li>
-                        <% } %>
-                        
-                        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
-                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                                <a class="page-link" href="?page=<%= i %>&search=<%= searchQuery %>&category=<%= categoryFilter %>">
-                                    <%= i %>
-                                </a>
-                            </li>
-                        <% } %>
-                        
-                        <% if (currentPage < totalPages) { %>
-                            <li class="page-item">
-                                <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= searchQuery %>&category=<%= categoryFilter %>">
-                                    Sau <i class="fas fa-chevron-right"></i>
-                                </a>
-                            </li>
-                        <% } %>
-                    </ul>
-                </nav>
-            </div>
-        <% } %>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

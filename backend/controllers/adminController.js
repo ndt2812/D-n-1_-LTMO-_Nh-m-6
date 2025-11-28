@@ -156,7 +156,8 @@ exports.toggleUserStatus = async (req, res) => {
     user.isActive = !user.isActive;
     await user.save();
 
-    const statusMessage = user.isActive ? 'Mở khóa' : 'Khóa';
+    // Message dựa trên hành động vừa thực hiện (previousStatus)
+    const statusMessage = previousStatus ? 'Khóa' : 'Mở khóa';
     req.flash('success', `${statusMessage} tài khoản "${user.username}" thành công`);
     res.redirect('/admin/users');
   } catch (err) {
