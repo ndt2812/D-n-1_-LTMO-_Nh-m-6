@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BookStore</string>
+    <string name="cd_remove_item">Xóa sản phẩm</string>
+</resources>
