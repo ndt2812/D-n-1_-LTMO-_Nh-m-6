@@ -1,0 +1,76 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Flash Messages -->
+            <% if (messages && messages.error) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= messages.error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+            <% if (messages && messages.success) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= messages.success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <!-- Page Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3><i class="fas fa-credit-card"></i> Test Thanh Toán VNPay</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Trang này dùng để test tích hợp VNPay. Nhập số tiền và click "Thanh toán" để chuyển đến trang thanh toán VNPay.
+                    </p>
+                    
+                    <form method="POST" action="/coins/test-vnpay">
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Số tiền (VND)</label>
+                            <input 
+                                type="number" 
+                                class="form-control" 
+                                id="amount" 
+                                name="amount" 
+                                value="100000" 
+                                min="10000" 
+                                max="10000000" 
+                                step="1000"
+                                required
+                            >
+                            <div class="form-text">
+                                Số tiền từ 10,000 VNĐ đến 10,000,000 VNĐ
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-credit-card"></i> Thanh toán qua VNPay
+                            </button>
+                            <a href="/coins/wallet" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Lưu ý:</h6>
+                        <ul class="mb-0">
+                            <li>Đây là môi trường test (Sandbox) của VNPay</li>
+                            <li>Sau khi thanh toán, bạn sẽ được redirect về <code>/coins/vnpay-return</code></li>
+                            <li>Bạn có thể test với thẻ test của VNPay</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+

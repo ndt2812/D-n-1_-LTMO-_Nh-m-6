@@ -7,6 +7,18 @@ const { authenticateToken } = require('../middleware/apiAuth');
 // VNPay return does not require authentication (signature is verified)
 router.get('/vnpay-return', coinController.handleVnpayReturn);
 
+// Payment success/failed pages (no auth required)
+router.get('/payment-success', coinController.showPaymentSuccess);
+router.get('/payment-failed', coinController.showPaymentFailed);
+
+// Test VNPay routes (không cần authentication để dễ test)
+// GET /coins/test-vnpay - Hiển thị trang test
+router.get('/test-vnpay', coinController.showTestVnpay);
+// POST /coins/test-vnpay - Tạo payment URL và redirect
+router.post('/test-vnpay', coinController.testVnpay);
+// GET /coins/test-vnpay/create?amount=100000 - Tạo payment URL (API)
+router.get('/test-vnpay/create', coinController.testVnpay);
+
 // Middleware to support both JWT and session authentication
 const authenticate = (req, res, next) => {
     // Try JWT authentication first (for mobile API)

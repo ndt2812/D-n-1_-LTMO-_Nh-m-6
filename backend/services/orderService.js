@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const User = require('../models/User');
 const Promotion = require('../models/Promotion');
+const { createNotification } = require('../controllers/notificationController');
 
 const ORDER_BOOK_FIELDS = 'title author price coverImage category';
 
@@ -230,7 +231,23 @@ async function createOrder({ userId, shippingInfo, paymentMethod, notes, promoti
       throw new OrderError('INSUFFICIENT_COINS', 'Số dư coin không đủ để thanh toán đơn hàng này.', 400);
     }
 
-    await user.deductCoins(finalAmount, `Thanh toán đơn hàng (${orderItems.length} sản phẩm)`);
+    // Deduct coins from user balance
+    const oldBalance = user.coinBalance;
+    user.coinBalance -= finalAmount;
+    
+    // Save user with coin deduction
+    await user.save();
+    
+    // Reload user to verify the balance was saved correctly
+    const updatedUser = await User.findById(user._id);
+    
+    // Log coin deduction for debugging
+    console.log(`[Order] Coin deduction - User: ${user._id}, Amount: ${finalAmount}, Old Balance: ${oldBalance}, New Balance: ${updatedUser.coinBalance}`);
+    
+    if (Math.abs(updatedUser.coinBalance - (oldBalance - finalAmount)) > 0.01) {
+      console.error(`[Order] WARNING: Coin balance mismatch! Expected: ${oldBalance - finalAmount}, Actual: ${updatedUser.coinBalance}`);
+    }
+    
     paymentStatus = 'paid';
   }
 
@@ -263,6 +280,29 @@ async function createOrder({ userId, shippingInfo, paymentMethod, notes, promoti
     } catch (error) {
       console.error('Failed to update promotion usage counter', error);
     }
+  }
+
+  // Create notification for order success
+  try {
+    const paymentMethodText = resolvedPaymentMethod === 'coin' ? 'Coin' : 
+                              resolvedPaymentMethod === 'cash_on_delivery' ? 'Tiền mặt khi nhận hàng' :
+                              resolvedPaymentMethod === 'credit_card' ? 'Thẻ tín dụng' : 'Chuyển khoản';
+    
+    await createNotification(
+      user._id,
+      'order_created',
+      'Đặt hàng thành công!',
+      `Đơn hàng #${order.orderNumber} của bạn đã được tạo thành công. Phương thức thanh toán: ${paymentMethodText}. Tổng tiền: ${finalAmount.toLocaleString('vi-VN')} đ`,
+      {
+        orderId: order._id.toString(),
+        orderNumber: order.orderNumber,
+        finalAmount: finalAmount,
+        paymentMethod: resolvedPaymentMethod
+      }
+    );
+  } catch (error) {
+    console.error('Error creating order notification:', error);
+    // Don't fail the order creation if notification fails
   }
 
   return order;
@@ -302,15 +342,13 @@ async function previewPromotion({ userId, promotionCode }) {
 }
 
 async function listAvailablePromotions() {
-  const now = new Date();
+  // Get all active promotions (show all active ones, validation happens when applying)
+  // This allows users to see all available promotion codes
   const promotions = await Promotion.find({
-    isActive: true,
-    startDate: { $lte: now },
-    endDate: { $gte: now }
+    isActive: true
   }).sort({ createdAt: -1 });
 
   return promotions
-    .filter((promotion) => promotion.maxUsage === null || promotion.currentUsage < promotion.maxUsage)
     .map((promotion) => ({
       id: promotion._id,
       code: promotion.code,
@@ -323,6 +361,26 @@ async function listAvailablePromotions() {
       startDate: promotion.startDate,
       endDate: promotion.endDate
     }));
+}
+
+// New function to list ALL promotions (for display purposes, even if expired or inactive)
+async function listAllPromotions() {
+  const promotions = await Promotion.find({})
+    .sort({ createdAt: -1 });
+
+  return promotions.map((promotion) => ({
+    id: promotion._id,
+    code: promotion.code,
+    description: promotion.description,
+    discountType: promotion.discountType,
+    discountValue: promotion.discountValue,
+    minimumPurchase: promotion.minimumPurchase,
+    maxUsage: promotion.maxUsage,
+    currentUsage: promotion.currentUsage,
+    startDate: promotion.startDate,
+    endDate: promotion.endDate,
+    isActive: promotion.isActive
+  }));
 }
 
 async function listOrders({ userId, page = 1, limit = 10 }) {

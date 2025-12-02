@@ -1,0 +1,103 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <!-- Success Icon -->
+                    <div class="mb-4">
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                            <i class="fas fa-check-circle text-success" style="font-size: 60px;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Success Message -->
+                    <h2 class="text-success mb-3">Thanh toán thành công!</h2>
+                    <p class="text-muted mb-4">Giao dịch của bạn đã được xử lý thành công. Coins đã được cộng vào ví.</p>
+
+                    <!-- Transaction Details -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-coins text-warning"></i> Chi tiết giao dịch
+                            </h5>
+                            <div class="row text-start">
+                                <div class="col-6 mb-2">
+                                    <strong>Số Coin nhận được:</strong>
+                                </div>
+                                <div class="col-6 mb-2 text-end">
+                                    <span class="badge bg-warning text-dark fs-6">
+                                        <%= totalCoins.toLocaleString('vi-VN') %> coins
+                                    </span>
+                                </div>
+                                <% if (bonusCoins > 0) { %>
+                                <div class="col-6 mb-2">
+                                    <small class="text-muted">- Coin gốc:</small>
+                                </div>
+                                <div class="col-6 mb-2 text-end">
+                                    <small class="text-muted"><%= baseCoins.toLocaleString('vi-VN') %> coins</small>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <small class="text-muted">- Coin bonus:</small>
+                                </div>
+                                <div class="col-6 mb-2 text-end">
+                                    <small class="text-success">+<%= bonusCoins.toLocaleString('vi-VN') %> coins</small>
+                                </div>
+                                <% } %>
+                                <hr class="my-2">
+                                <div class="col-6 mb-2">
+                                    <strong>Số dư hiện tại:</strong>
+                                </div>
+                                <div class="col-6 mb-2 text-end">
+                                    <strong class="text-primary fs-5">
+                                        <%= newBalance.toLocaleString('vi-VN') %> coins
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="/coins/wallet" class="btn btn-primary btn-lg">
+                            <i class="fas fa-wallet"></i> Xem ví Coin
+                        </a>
+                        <a href="/coins/history" class="btn btn-outline-secondary">
+                            <i class="fas fa-history"></i> Xem lịch sử giao dịch
+                        </a>
+                    </div>
+
+                    <!-- Auto Redirect Notice -->
+                    <p class="text-muted mt-4 mb-0">
+                        <small>
+                            <i class="fas fa-info-circle"></i> 
+                            Tự động chuyển đến trang ví trong <span id="countdown">5</span> giây...
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto redirect after 5 seconds
+    let countdown = 5;
+    const countdownElement = document.getElementById('countdown');
+    
+    const timer = setInterval(() => {
+        countdown--;
+        if (countdownElement) {
+            countdownElement.textContent = countdown;
+        }
+        
+        if (countdown <= 0) {
+            clearInterval(timer);
+            window.location.href = '/coins/wallet';
+        }
+    }, 1000);
+</script>
+
+<%- include('../partials/footer') %>
+

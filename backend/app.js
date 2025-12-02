@@ -17,11 +17,13 @@ var ordersRouter = require('./routes/orders');
 var reviewsRouter = require('./routes/reviews');
 var previewRouter = require('./routes/preview');
 var coinsRouter = require('./routes/coins');
+var coinController = require('./controllers/coinController');
 var accessRouter = require('./routes/access');
 var adminRouter = require('./routes/admin');
 var apiCartRouter = require('./routes/apiCart');
 var apiOrdersRouter = require('./routes/apiOrders');
 var apiBooksRouter = require('./routes/apiBooks');
+var notificationsRouter = require('./routes/notifications');
 
 var app = express();
 
@@ -520,6 +522,241 @@ app.post('/api/reset-password',
   }
 );
 
+// ===== API CHANGE PASSWORD - SEND CODE (Gửi mã xác nhận cho đổi mật khẩu - đã đăng nhập) =====
+app.post('/api/change-password/send-code',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = req.user.userId || req.user._id || req.user.id;
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ 
+          error: 'Không tìm thấy người dùng' 
+        });
+      }
+
+      // Kiểm tra xem user có email để gửi không
+      const recipientEmail = user.profile?.email || user.username;
+      const isEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail);
+      if (!isEmailFormat) {
+        return res.status(400).json({ 
+          error: 'Tài khoản này chưa có email. Vui lòng liên hệ quản trị viên để được hỗ trợ.' 
+        });
+      }
+
+      // Tạo mã xác nhận 6 chữ số
+      const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const resetCodeExpires = Date.now() + 15 * 60 * 1000; // 15 phút
+
+      // Lưu mã vào database
+      user.resetCode = resetCode;
+      user.resetCodeExpires = resetCodeExpires;
+      await user.save();
+
+      // Gửi email với mã xác nhận
+      try {
+        await emailService.sendPasswordResetCode(recipientEmail, resetCode);
+        console.log(`✅ Mã xác nhận đổi mật khẩu đã được gửi đến: ${recipientEmail}`);
+      } catch (emailError) {
+        console.error('❌ Lỗi gửi email:', emailError);
+        // Xóa mã đã lưu nếu gửi email thất bại
+        user.resetCode = undefined;
+        user.resetCodeExpires = undefined;
+        await user.save();
+        
+        return res.status(500).json({ 
+          error: 'Không thể gửi email. Vui lòng thử lại sau.' 
+        });
+      }
+
+      res.json({ 
+        success: true,
+        message: 'Mã xác nhận đã được gửi đến email của bạn.' 
+      });
+    } catch (err) {
+      console.error('Change password send code error:', err);
+      res.status(500).json({ error: 'Lỗi server: ' + err.message });
+    }
+  }
+);
+
+// ===== API CHANGE PASSWORD - VERIFY CODE (Xác nhận mã cho đổi mật khẩu - đã đăng nhập) =====
+app.post('/api/change-password/verify-code',
+  authenticateToken,
+  body('code').isLength({ min: 6, max: 6 }).withMessage('Mã xác nhận phải có 6 chữ số.'),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          error: 'Validation failed',
+          errors: errors.array() 
+        });
+      }
+
+      const { code } = req.body;
+      const userId = req.user.userId || req.user._id || req.user.id;
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ 
+          error: 'Không tìm thấy người dùng' 
+        });
+      }
+
+      // Kiểm tra mã xác nhận
+      if (!user.resetCode || user.resetCode !== code) {
+        return res.status(400).json({ 
+          error: 'Mã xác nhận không đúng.' 
+        });
+      }
+
+      // Kiểm tra mã còn hiệu lực không
+      if (!user.resetCodeExpires || user.resetCodeExpires < Date.now()) {
+        return res.status(400).json({ 
+          error: 'Mã xác nhận đã hết hạn. Vui lòng yêu cầu mã mới.' 
+        });
+      }
+
+      // Tạo token tạm thời để đổi mật khẩu
+      const resetToken = crypto.randomBytes(20).toString('hex');
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = Date.now() + 30 * 60 * 1000; // 30 phút
+      await user.save();
+
+      res.json({ 
+        success: true,
+        message: 'Mã xác nhận hợp lệ.',
+        resetToken: resetToken
+      });
+    } catch (err) {
+      console.error('Change password verify code error:', err);
+      res.status(500).json({ error: 'Lỗi server: ' + err.message });
+    }
+  }
+);
+
+// ===== API CHANGE PASSWORD - RESET (Đổi mật khẩu - đã đăng nhập) =====
+app.post('/api/change-password/reset',
+  authenticateToken,
+  body('newPassword').isLength({ min: 6 }).withMessage('Mật khẩu mới phải có ít nhất 6 ký tự.'),
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ 
+          error: 'Validation failed',
+          errors: errors.array() 
+        });
+      }
+
+      const { newPassword } = req.body;
+      const userId = req.user.userId || req.user._id || req.user.id;
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({ 
+          error: 'Không tìm thấy người dùng' 
+        });
+      }
+
+      // Kiểm tra mã đã được verify chưa (thông qua verify-code)
+      if (!user.resetCode) {
+        // Tạo notification cho đổi mật khẩu thất bại
+        try {
+          const { createNotification } = require('./controllers/notificationController');
+          await createNotification(
+            userId,
+            'password_change_failed',
+            'Đổi mật khẩu thất bại',
+            'Đổi mật khẩu thất bại: Mã xác nhận chưa được xác thực hoặc đã hết hạn. Vui lòng thử lại.'
+          );
+        } catch (notificationError) {
+          console.error('Error creating password change failed notification:', notificationError);
+        }
+        return res.status(400).json({ 
+          error: 'Mã xác nhận chưa được xác thực hoặc đã hết hạn. Vui lòng xác nhận mã trước.' 
+        });
+      }
+
+      // Kiểm tra mã còn hiệu lực không
+      if (!user.resetCodeExpires || user.resetCodeExpires < Date.now()) {
+        // Tạo notification cho đổi mật khẩu thất bại
+        try {
+          const { createNotification } = require('./controllers/notificationController');
+          await createNotification(
+            userId,
+            'password_change_failed',
+            'Đổi mật khẩu thất bại',
+            'Đổi mật khẩu thất bại: Mã xác nhận đã hết hạn. Vui lòng yêu cầu mã mới và thử lại.'
+          );
+        } catch (notificationError) {
+          console.error('Error creating password change failed notification:', notificationError);
+        }
+        return res.status(400).json({ 
+          error: 'Mã xác nhận đã hết hạn. Vui lòng yêu cầu mã mới.' 
+        });
+      }
+
+      // Đổi mật khẩu
+      user.password = newPassword;
+      user.resetCode = undefined;
+      user.resetCodeExpires = undefined;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+
+      // Gửi email thông báo đổi mật khẩu thành công
+      const recipientEmail = user.profile?.email || user.username;
+      try {
+        await emailService.sendPasswordResetSuccess(recipientEmail);
+      } catch (emailError) {
+        console.error('Failed to send success email:', emailError);
+      }
+
+      // Tạo notification cho đổi mật khẩu thành công
+      try {
+        const { createNotification } = require('./controllers/notificationController');
+        await createNotification(
+          userId,
+          'password_change',
+          'Đổi mật khẩu thành công!',
+          'Mật khẩu của bạn đã được đổi thành công. Nếu bạn không thực hiện thao tác này, vui lòng liên hệ ngay với chúng tôi.'
+        );
+      } catch (notificationError) {
+        console.error('Error creating password change notification:', notificationError);
+        // Không fail request nếu notification thất bại
+      }
+
+      res.json({ 
+        success: true,
+        message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.' 
+      });
+    } catch (err) {
+      console.error('Change password reset error:', err);
+      
+      // Tạo notification cho đổi mật khẩu thất bại (lỗi server)
+      try {
+        const userId = req.user?.userId || req.user?._id || req.user?.id;
+        if (userId) {
+          const { createNotification } = require('./controllers/notificationController');
+          await createNotification(
+            userId,
+            'password_change_failed',
+            'Đổi mật khẩu thất bại',
+            'Đổi mật khẩu thất bại do lỗi hệ thống. Vui lòng thử lại sau.'
+          );
+        }
+      } catch (notificationError) {
+        console.error('Error creating password change failed notification:', notificationError);
+      }
+      
+      res.status(500).json({ error: 'Lỗi server: ' + err.message });
+    }
+  }
+);
+
 // ===== API GET PROFILE (cần authentication) =====
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
@@ -686,9 +923,91 @@ app.use('/orders', ordersRouter);
 app.use('/reviews', reviewsRouter);
 app.use('/preview', previewRouter);
 app.use('/coins', coinsRouter);
+
+// VNPay return URL - hỗ trợ cả /api/payment/vnpay/return và /coins/vnpay-return
+// Route trung gian để xử lý ngrok warning page và tự động redirect
+app.get('/api/payment/vnpay/return', (req, res) => {
+    // Tạo trang HTML với JavaScript để tự động redirect sau khi người dùng đã vào trang
+    // (sau khi đã click "Visit Site" trên ngrok warning page)
+    const queryString = new URLSearchParams(req.query).toString();
+    
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="vi">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Đang xử lý thanh toán VNPay...</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                }
+                .container {
+                    text-align: center;
+                    background: white;
+                    padding: 40px;
+                    border-radius: 10px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                }
+                .spinner {
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #667eea;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    animation: spin 1s linear infinite;
+                    margin: 20px auto;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                h2 {
+                    color: #333;
+                    margin: 20px 0;
+                }
+                p {
+                    color: #666;
+                    margin: 10px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="spinner"></div>
+                <h2>Đang xử lý thanh toán VNPay...</h2>
+                <p>Vui lòng đợi trong giây lát</p>
+                <p style="font-size: 12px; color: #999; margin-top: 20px;">
+                    Nếu không tự động chuyển trang, 
+                    <a href="/coins/vnpay-return?${queryString}" style="color: #667eea;">click vào đây</a>
+                </p>
+            </div>
+            <script>
+                // Tự động redirect đến handler thực sự
+                // Sử dụng setTimeout để đảm bảo trang đã load xong
+                setTimeout(function() {
+                    window.location.href = '/coins/vnpay-return?${queryString}';
+                }, 500);
+                
+                // Fallback: redirect ngay lập tức nếu có thể
+                if (document.readyState === 'complete') {
+                    window.location.href = '/coins/vnpay-return?${queryString}';
+                }
+            </script>
+        </body>
+        </html>
+    `);
+});
 app.use('/access', accessRouter);
 app.use('/api/cart', apiCartRouter);
 app.use('/api/orders', apiOrdersRouter);
+app.use('/api/notifications', notificationsRouter);
 app.use('/api/books', apiBooksRouter);
 
 // catch 404 and forward to error handler

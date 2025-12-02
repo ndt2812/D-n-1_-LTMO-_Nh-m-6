@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <!-- Error Icon -->
+                    <div class="mb-4">
+                        <div class="rounded-circle bg-danger bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                            <i class="fas fa-times-circle text-danger" style="font-size: 60px;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Error Message -->
+                    <h2 class="text-danger mb-3">Thanh toán thất bại</h2>
+                    <p class="text-muted mb-4"><%= errorMessage %></p>
+
+                    <!-- Error Details -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-info-circle text-info"></i> Thông tin lỗi
+                            </h5>
+                            <div class="text-start">
+                                <div class="mb-2">
+                                    <strong>Mã lỗi:</strong> 
+                                    <span class="badge bg-danger"><%= errorCode %></span>
+                                </div>
+                                <% if (transactionId) { %>
+                                <div class="mb-2">
+                                    <strong>Mã giao dịch:</strong> 
+                                    <code><%= transactionId %></code>
+                                </div>
+                                <% } %>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Giao dịch của bạn không được xử lý. Vui lòng thử lại hoặc liên hệ hỗ trợ nếu vấn đề vẫn tiếp tục.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="/coins/topup" class="btn btn-primary btn-lg">
+                            <i class="fas fa-redo"></i> Thử lại thanh toán
+                        </a>
+                        <a href="/coins/wallet" class="btn btn-outline-secondary">
+                            <i class="fas fa-wallet"></i> Về trang ví Coin
+                        </a>
+                    </div>
+
+                    <!-- Common Error Codes Info -->
+                    <div class="mt-4">
+                        <button class="btn btn-link text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#errorCodes" aria-expanded="false">
+                            <small><i class="fas fa-question-circle"></i> Xem các mã lỗi thường gặp</small>
+                        </button>
+                        <div class="collapse mt-2" id="errorCodes">
+                            <div class="card card-body bg-light text-start">
+                                <small>
+                                    <strong>07:</strong> Trừ tiền thành công nhưng giao dịch bị nghi ngờ<br>
+                                    <strong>09:</strong> Thẻ/Tài khoản chưa đăng ký dịch vụ InternetBanking<br>
+                                    <strong>10:</strong> Xác thực thông tin thẻ/tài khoản không đúng quá 3 lần<br>
+                                    <strong>11:</strong> Đã hết hạn chờ thanh toán<br>
+                                    <strong>12:</strong> Thẻ/Tài khoản bị khóa<br>
+                                    <strong>24:</strong> Giao dịch bị hủy<br>
+                                    <strong>51:</strong> Tài khoản không đủ số dư<br>
+                                    <strong>65:</strong> Tài khoản đã vượt quá hạn mức giao dịch<br>
+                                    <strong>75:</strong> Ngân hàng thanh toán đang bảo trì
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
+
