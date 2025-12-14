@@ -73,7 +73,7 @@ const PromotionSchema = new mongoose.Schema({
 });
 
 // Index for better query performance
-PromotionSchema.index({ code: 1 });
+// Note: code already has unique index from unique: true in schema
 PromotionSchema.index({ isActive: 1 });
 PromotionSchema.index({ startDate: 1, endDate: 1 });
 

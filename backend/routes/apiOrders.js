@@ -15,6 +15,7 @@ router.get('/promotions', apiOrderController.listPromotions);
 router.get('/', apiOrderController.listOrders);
 router.get('/:orderId', apiOrderController.getOrderById);
 router.post('/:orderId/cancel', apiOrderController.cancelOrder);
+router.post('/:orderId/request-return', apiOrderController.requestReturn);
 
 module.exports = router;
 

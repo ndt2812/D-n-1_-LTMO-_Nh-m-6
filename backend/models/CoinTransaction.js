@@ -32,7 +32,7 @@ const coinTransactionSchema = new mongoose.Schema({
     // Payment method for deposits
     paymentMethod: {
         type: String,
-        enum: ['momo', 'vnpay', 'bank_transfer', 'admin_bonus'],
+        enum: ['momo', 'vnpay', 'bank_transfer', 'admin_bonus', 'order_reward', 'cash_on_delivery', 'credit_card', 'coin'],
         default: null
     },
     // Payment transaction ID from payment gateway
@@ -85,14 +85,34 @@ coinTransactionSchema.statics.createTransaction = async function(transactionData
     const balanceBefore = user.coinBalance;
     let balanceAfter = balanceBefore;
 
+    console.log('🔔 [CoinTransaction] createTransaction called:', {
+        userId: user._id.toString(),
+        type: transactionData.type,
+        amount: transactionData.amount,
+        balanceBefore: balanceBefore
+    });
+
     // Calculate balance after transaction
     if (transactionData.type === 'deposit' || transactionData.type === 'refund' || transactionData.type === 'bonus') {
         balanceAfter = balanceBefore + transactionData.amount;
+        console.log('🔔 [CoinTransaction] Adding coins:', {
+            type: transactionData.type,
+            amount: transactionData.amount,
+            balanceBefore: balanceBefore,
+            balanceAfter: balanceAfter
+        });
     } else if (transactionData.type === 'purchase' || transactionData.type === 'withdrawal') {
-        if (balanceBefore < transactionData.amount) {
+        // Chỉ kiểm tra balance nếu amount > 0
+        if (transactionData.amount > 0 && balanceBefore < transactionData.amount) {
             throw new Error('Insufficient coin balance');
         }
         balanceAfter = balanceBefore - transactionData.amount;
+        console.log('🔔 [CoinTransaction] Deducting coins:', {
+            type: transactionData.type,
+            amount: transactionData.amount,
+            balanceBefore: balanceBefore,
+            balanceAfter: balanceAfter
+        });
     }
 
     // Create transaction record
@@ -103,10 +123,19 @@ coinTransactionSchema.statics.createTransaction = async function(transactionData
     });
 
     await transaction.save();
+    console.log('🔔 [CoinTransaction] Transaction saved:', {
+        transactionId: transaction._id,
+        balanceBefore: transaction.balanceBefore,
+        balanceAfter: transaction.balanceAfter
+    });
 
     // Update user balance
     user.coinBalance = balanceAfter;
     await user.save();
+    console.log('🔔 [CoinTransaction] User balance updated:', {
+        userId: user._id.toString(),
+        newBalance: user.coinBalance
+    });
 
     return transaction;
 };

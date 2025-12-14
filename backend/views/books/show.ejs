@@ -3,7 +3,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-4">
-            <img src="<%= book.coverImage %>" class="img-fluid rounded" alt="<%= book.title %>">
+            <img src="<%= book.coverImage && book.coverImage.startsWith('http') ? book.coverImage : '/uploads/' + book.coverImage %>" class="img-fluid rounded" alt="<%= book.title %>">
         </div>
         <div class="col-md-8">
             <h1><%= book.title %></h1>

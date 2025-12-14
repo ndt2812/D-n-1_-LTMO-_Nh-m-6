@@ -56,7 +56,7 @@
             <div class="col-md-10">
                 <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
                     <h1><%= title %></h1>
-                    <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                    <span class="badge bg-primary">Quản trị viên: <%= currentUser.username %></span>
                 </div>
 
                 <!-- Flash Messages -->
@@ -121,7 +121,7 @@
                             <div class="col-md-4">
                                 <label class="form-label" for="search">Tìm kiếm</label>
                                 <input type="text" class="form-control" id="search" name="search"
-                                       value="<%= filters.search %>" placeholder="Mã đơn, tên khách hàng, username...">
+                                       value="<%= filters.search %>" placeholder="Mã đơn, tên khách hàng, tên đăng nhập...">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label" for="orderStatus">Trạng thái đơn</label>
@@ -131,6 +131,8 @@
                                     <option value="processing" <%= filters.orderStatus === 'processing' ? 'selected' : '' %>>Đang xử lý</option>
                                     <option value="shipped" <%= filters.orderStatus === 'shipped' ? 'selected' : '' %>>Đang giao</option>
                                     <option value="delivered" <%= filters.orderStatus === 'delivered' ? 'selected' : '' %>>Đã giao</option>
+                                    <option value="return_requested" <%= filters.orderStatus === 'return_requested' ? 'selected' : '' %>>Yêu cầu hoàn hàng</option>
+                                    <option value="returned" <%= filters.orderStatus === 'returned' ? 'selected' : '' %>>Đã hoàn hàng</option>
                                     <option value="cancelled" <%= filters.orderStatus === 'cancelled' ? 'selected' : '' %>>Đã hủy</option>
                                 </select>
                             </div>
@@ -204,8 +206,14 @@
                                                         <span class="badge-status badge bg-info text-dark">Đang giao</span>
                                                     <% } else if (order.orderStatus === 'delivered') { %>
                                                         <span class="badge-status badge bg-success">Đã giao</span>
+                                                    <% } else if (order.orderStatus === 'return_requested') { %>
+                                                        <span class="badge-status badge bg-warning text-dark">Yêu cầu hoàn hàng</span>
+                                                    <% } else if (order.orderStatus === 'returned') { %>
+                                                        <span class="badge-status badge bg-secondary">Đã hoàn hàng</span>
+                                                    <% } else if (order.orderStatus === 'cancelled') { %>
+                                                        <span class="badge-status badge bg-danger">Đã hủy</span>
                                                     <% } else { %>
-                                                        <span class="badge-status badge bg-secondary">Đã hủy</span>
+                                                        <span class="badge-status badge bg-secondary"><%= order.orderStatus %></span>
                                                     <% } %>
                                                 </td>
                                                 <td>

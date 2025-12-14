@@ -65,11 +65,11 @@ const bookAccessSchema = new mongoose.Schema({
             }
         }]
     },
-    // Related transaction
+    // Related transaction (optional for physical purchases)
     transaction: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CoinTransaction',
-        required: true
+        required: false
     },
     // Metadata for additional info
     metadata: {
@@ -111,7 +111,7 @@ bookAccessSchema.statics.grantAccess = async function(accessData) {
         expiresAt.setDate(expiresAt.getDate() + accessDuration);
     }
 
-    // Create transaction record
+    // Create transaction record (only if coins were paid)
     const CoinTransaction = mongoose.model('CoinTransaction');
     const Book = mongoose.model('Book');
     
@@ -120,13 +120,30 @@ bookAccessSchema.statics.grantAccess = async function(accessData) {
         throw new Error('Book not found');
     }
 
-    const transaction = await CoinTransaction.createTransaction({
-        user: userId,
-        type: 'purchase',
-        amount: coinsPaid,
-        description: `Purchased access to "${book.title}"`,
-        relatedBook: bookId
-    });
+    let transaction = null;
+    
+    // Only create transaction if coins were actually paid
+    // For physical purchases (coinsPaid = 0), we don't need a transaction
+    if (coinsPaid > 0) {
+        transaction = await CoinTransaction.createTransaction({
+            user: userId,
+            type: 'purchase',
+            amount: coinsPaid,
+            description: `Purchased access to "${book.title}"`,
+            relatedBook: bookId
+        });
+    } else if (purchaseMethod === 'physical_purchase') {
+        // For physical purchases, create a transaction with type 'bonus' to record the access grant
+        // This allows tracking without affecting coin balance
+        transaction = await CoinTransaction.createTransaction({
+            user: userId,
+            type: 'bonus',
+            amount: 0,
+            description: `Digital access granted from physical purchase of "${book.title}"`,
+            relatedBook: bookId,
+            paymentMethod: 'physical_purchase'
+        });
+    }
 
     // Create or update access record
     const accessRecord = existingAccess || new this();
@@ -138,7 +155,7 @@ bookAccessSchema.statics.grantAccess = async function(accessData) {
     accessRecord.accessDuration = accessDuration;
     accessRecord.expiresAt = expiresAt;
     accessRecord.isActive = true;
-    accessRecord.transaction = transaction._id;
+    accessRecord.transaction = transaction ? transaction._id : null;
 
     await accessRecord.save();
     return accessRecord;

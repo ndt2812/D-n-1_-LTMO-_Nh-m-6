@@ -6,6 +6,11 @@ const { authenticateToken } = require('../middleware/apiAuth');
 
 // VNPay return does not require authentication (signature is verified)
 router.get('/vnpay-return', coinController.handleVnpayReturn);
+router.post('/vnpay-return', coinController.handleVnpayReturn);
+
+// VNPay IPN callback (server-to-server, no auth required)
+router.post('/vnpay-callback', coinController.handleVnpayCallback);
+router.get('/vnpay-callback', coinController.handleVnpayCallback);
 
 // Payment success/failed pages (no auth required)
 router.get('/payment-success', coinController.showPaymentSuccess);
@@ -63,5 +68,13 @@ router.post('/api/payment-callback', coinController.paymentCallback);
 // Admin routes
 // POST /coins/admin/give-bonus - Tặng coin bonus (Admin only)
 router.post('/admin/give-bonus', isAdmin, coinController.adminGiveBonus);
+
+// Manual fix endpoint - Process pending VNPay transactions
+// GET /coins/admin/fix-pending-transactions - Fix pending transactions (Admin only)
+router.get('/admin/fix-pending-transactions', isAdmin, coinController.fixPendingTransactions);
+
+// User endpoint - Manually trigger callback processing for a specific transaction
+// POST /coins/manual-callback - Manually process VNPay callback (for fixing pending transactions)
+router.post('/manual-callback', authenticate, coinController.manualCallback);
 
 module.exports = router;

@@ -32,7 +32,7 @@
                             <a href="/admin/users" class="btn btn-outline-secondary me-2">
                                 <i class="fas fa-arrow-left"></i> Quay lại
                             </a>
-                            <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                            <span class="badge bg-primary">Quản trị viên: <%= currentUser.username %></span>
                         </div>
                     </div>                <!-- Flash Messages -->
                 <% if (typeof success !== 'undefined' && success.length > 0) { %>
@@ -56,7 +56,7 @@
                         <div class="card">
                             <div class="card-body text-center">
                                 <% if (user.avatar) { %>
-                                    <img src="/uploads/<%= user.avatar %>" alt="Avatar" class="profile-avatar mb-3">
+                                    <img src="/uploads/<%= user.avatar %>" alt="Ảnh đại diện" class="profile-avatar mb-3">
                                 <% } else { %>
                                     <div class="profile-avatar bg-secondary d-flex align-items-center justify-content-center mb-3 mx-auto">
                                         <i class="fas fa-user fa-2x text-white"></i>
@@ -105,24 +105,26 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <% if (user.role !== 'admin') { %>
+                        <% if (user._id.toString() !== currentUser._id.toString()) { %>
                             <div class="card mt-3">
                                 <div class="card-header">
                                     <h6 class="mb-0">Thao tác</h6>
                                 </div>
                                 <div class="card-body">
-                                    <!-- Toggle Role -->
-                                    <form method="POST" action="/admin/users/<%= user._id %>/role" class="mb-2">
-                                        <input type="hidden" name="role" value="<%= user.role === 'admin' ? 'customer' : 'admin' %>">
-                                        <button type="submit" class="btn btn-warning w-100" 
-                                                onclick="return confirm('Bạn có chắc muốn thay đổi vai trò?')">
-                                            <i class="fas fa-user-cog"></i> 
-                                            <%= user.role === 'admin' ? 'Hạ xuống khách hàng' : 'Nâng lên admin' %>
-                                        </button>
-                                    </form>
+                                    <% if (user.role !== 'admin') { %>
+                                        <!-- Toggle Role -->
+                                        <form method="POST" action="/admin/users/<%= user._id %>/role" class="mb-2">
+                                            <input type="hidden" name="role" value="<%= user.role === 'admin' ? 'customer' : 'admin' %>">
+                                            <button type="submit" class="btn btn-warning w-100" 
+                                                    onclick="return confirm('Bạn có chắc muốn thay đổi vai trò?')">
+                                                <i class="fas fa-user-cog"></i> 
+                                                <%= user.role === 'admin' ? 'Hạ xuống khách hàng' : 'Nâng lên admin' %>
+                                            </button>
+                                        </form>
+                                    <% } %>
 
                                     <!-- Toggle Status -->
-                                    <form method="POST" action="/admin/users/<%= user._id %>/toggle-status">
+                                    <form method="POST" action="/admin/users/<%= user._id %>/toggle-status" class="mb-2">
                                         <% if (typeof user.isActive === 'undefined' || user.isActive) { %>
                                             <!-- User is active, show lock button -->
                                             <button type="submit" class="btn btn-danger w-100"
@@ -137,6 +139,23 @@
                                             </button>
                                         <% } %>
                                     </form>
+
+                                    <!-- Delete User -->
+                                    <form method="POST" action="/admin/users/<%= user._id %>/delete">
+                                        <button type="submit" class="btn btn-danger w-100"
+                                                onclick="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN người dùng này?\\n\\nHành động này sẽ xóa:\\n- Tài khoản người dùng\\n- Tất cả đơn hàng\\n- Giỏ hàng\\n- Đánh giá\\n- Quyền truy cập sách\\n- Giao dịch coin\\n- Thông báo\\n\\nHành động này KHÔNG THỂ hoàn tác!')">
+                                            <i class="fas fa-trash"></i> Xóa người dùng
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="card mt-3">
+                                <div class="card-body">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle"></i>
+                                        Đây là tài khoản của bạn. Bạn không thể thực hiện các thao tác trên tài khoản của chính mình.
+                                    </div>
                                 </div>
                             </div>
                         <% } %>

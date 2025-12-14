@@ -268,7 +268,7 @@
                         <a href="/admin/books/create" class="btn btn-primary me-2">
                             <i class="fas fa-plus"></i> Thêm sách mới
                         </a>
-                        <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                        <span class="badge bg-primary">Quản trị viên: <%= currentUser.username %></span>
                     </div>
                 </div>
 
@@ -386,7 +386,7 @@
                                         <td>
                                             <% if (book.coverImage) { %>
                                                 <img src="<%= book.coverImage.startsWith('http') ? book.coverImage : '/uploads/' + book.coverImage %>" 
-                                                     alt="Cover" class="book-cover">
+                                                     alt="Bìa sách" class="book-cover">
                                             <% } else { %>
                                                 <div class="book-cover bg-light d-flex align-items-center justify-content-center">
                                                     <i class="fas fa-book text-muted"></i>
@@ -407,7 +407,7 @@
                                         </td>
                                         <td>
                                             <span class="category-badge">
-                                                <%= book.category?.name || 'Fiction' %>
+                                                <%= book.category?.name || 'Chưa phân loại' %>
                                             </span>
                                         </td>
                                         <td>

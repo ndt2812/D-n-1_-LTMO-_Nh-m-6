@@ -138,14 +138,29 @@ const coinController = {
             const { exchangeRate, baseCoins, bonusCoins, totalCoins } = calculateCoins(amount);
 
             if (paymentMethod === 'vnpay') {
+                console.log('🔔 Starting VNPay top-up process:', {
+                    userId,
+                    amount,
+                    totalCoins,
+                    baseCoins,
+                    bonusCoins
+                });
+                
                 const user = await User.findById(userId);
                 if (!user) {
+                    console.error('❌ User not found:', userId);
                     if (wantsJSONResponse(req)) {
                         return res.status(404).json({ success: false, message: 'User not found' });
                     }
                     req.flash('error', 'Không tìm thấy thông tin người dùng');
                     return res.redirect('/login');
                 }
+
+                console.log('✅ User found:', {
+                    userId: user._id,
+                    username: user.username,
+                    currentBalance: user.coinBalance
+                });
 
                 const paymentTransactionId = `VNP${Date.now()}`;
                 const description = `Nạp ${totalCoins} coins (${baseCoins} + ${bonusCoins} bonus) qua VNPay`;
@@ -162,6 +177,13 @@ const coinController = {
 
                 // Generate transaction reference for VNPay
                 const vnp_TxnRef = vnpayService.generateTxnRef(paymentTransactionId);
+
+                console.log('📝 Creating CoinTransaction:', {
+                    vnp_TxnRef,
+                    paymentTransactionId,
+                    totalCoins,
+                    balanceBefore: user.coinBalance
+                });
 
                 const transaction = new CoinTransaction({
                     user: userId,
@@ -183,17 +205,43 @@ const coinController = {
                 });
 
                 await transaction.save();
+                console.log('✅ CoinTransaction saved:', {
+                    transactionId: transaction._id,
+                    paymentTransactionId: transaction.paymentTransactionId,
+                    status: transaction.status
+                });
 
                 let paymentUrl;
                 try {
-                    const result = vnpayService.createPaymentUrl({
+                    console.log('🔗 Creating VNPay payment URL:', {
                         vnp_Amount: amount,
                         vnp_IpAddr: ipAddr,
                         vnp_TxnRef: vnp_TxnRef,
                         vnp_OrderInfo: sanitizedOrderInfo
                     });
+                    
+                    // Build return URL with ngrok URL if available
+                    const baseUrl = `${req.protocol}://${req.get('host')}`;
+                    const returnUrl = `${baseUrl}/coins/vnpay-return`;
+                    
+                    console.log('🔗 Using return URL:', returnUrl);
+                    
+                    const result = vnpayService.createPaymentUrl({
+                        vnp_Amount: amount,
+                        vnp_IpAddr: ipAddr,
+                        vnp_TxnRef: vnp_TxnRef,
+                        vnp_OrderInfo: sanitizedOrderInfo,
+                        vnp_ReturnUrl: returnUrl
+                    });
+
+                    console.log('🔗 VNPay payment URL result:', {
+                        success: result.success,
+                        hasPaymentUrl: !!result.paymentUrl,
+                        message: result.message
+                    });
 
                     if (!result.success) {
+                        console.error('❌ Failed to create VNPay payment URL:', result.message);
                         throw new Error(result.message || 'Lỗi tạo URL thanh toán VNPay');
                     }
 
@@ -464,8 +512,16 @@ const coinController = {
         try {
             console.log('🔔 VNPay Return Callback received:', {
                 query: Object.keys(req.query),
+                queryParams: req.query,
                 responseCode: req.query.vnp_ResponseCode,
-                txnRef: req.query.vnp_TxnRef
+                txnRef: req.query.vnp_TxnRef,
+                amount: req.query.vnp_Amount,
+                transactionNo: req.query.vnp_TransactionNo,
+                accept: req.headers.accept,
+                wantsJSON: wantsJSONResponse(req),
+                isApiRequest: req.isApiRequest,
+                url: req.url,
+                fullUrl: req.protocol + '://' + req.get('host') + req.originalUrl
             });
 
             if (!Object.keys(req.query).length) {
@@ -491,11 +547,70 @@ const coinController = {
             const responseCode = vnpParams.vnp_ResponseCode;
             const txnRef = vnpParams.vnp_TxnRef;
 
-            const transaction = await CoinTransaction.findOne({ paymentTransactionId: txnRef });
+            console.log('🔍 Searching for transaction with paymentTransactionId:', txnRef);
+            console.log('🔍 Full txnRef:', JSON.stringify(txnRef));
+            
+            // Try multiple ways to find the transaction
+            let transaction = null;
+            
+            // Method 1: Find by paymentTransactionId (exact match)
+            transaction = await CoinTransaction.findOne({ paymentTransactionId: txnRef });
+            console.log('🔍 Method 1 (paymentTransactionId exact):', transaction ? 'Found' : 'Not found');
+            
+            // Method 2: Find by metadata.vnp_TxnRef
             if (!transaction) {
-                console.error('❌ Transaction not found for VNPay ref', txnRef);
-                if (wantsJSONResponse(req)) {
-                    return res.status(404).json({ success: false, message: 'Không tìm thấy giao dịch' });
+                transaction = await CoinTransaction.findOne({ 'metadata.vnp_TxnRef': txnRef });
+                console.log('🔍 Method 2 (metadata.vnp_TxnRef):', transaction ? 'Found' : 'Not found');
+            }
+            
+            // Method 3: Find by partial match (in case of formatting differences)
+            if (!transaction) {
+                const allPendingVnpay = await CoinTransaction.find({ 
+                    paymentMethod: 'vnpay',
+                    status: 'pending'
+                }).limit(10);
+                
+                console.log('🔍 Method 3: Checking all pending VNPay transactions:', allPendingVnpay.length);
+                for (const txn of allPendingVnpay) {
+                    const txnPaymentId = txn.paymentTransactionId || '';
+                    const txnMetadataRef = txn.metadata?.vnp_TxnRef || '';
+                    
+                    // Check if txnRef matches any part of paymentTransactionId or metadata
+                    if (txnPaymentId.includes(txnRef) || txnRef.includes(txnPaymentId) ||
+                        txnMetadataRef.includes(txnRef) || txnRef.includes(txnMetadataRef)) {
+                        console.log('🔍 Found potential match:', {
+                            transactionId: txn._id,
+                            paymentTransactionId: txnPaymentId,
+                            metadataRef: txnMetadataRef,
+                            searchRef: txnRef
+                        });
+                        transaction = txn;
+                        break;
+                    }
+                }
+            }
+            
+            if (!transaction) {
+                console.error('❌ Transaction not found for VNPay ref:', txnRef);
+                console.error('❌ Available transactions with vnpay paymentMethod:');
+                const allVnpayTransactions = await CoinTransaction.find({ 
+                    paymentMethod: 'vnpay',
+                    status: 'pending'
+                }).limit(10).select('paymentTransactionId metadata createdAt');
+                console.error('❌ Recent pending VNPay transactions:', JSON.stringify(allVnpayTransactions, null, 2));
+                
+                if (wantsJSONResponse(req) || req.query.mobile === 'true') {
+                    return res.status(404).json({ 
+                        success: false, 
+                        message: 'Không tìm thấy giao dịch',
+                        searchedTxnRef: txnRef,
+                        availableTransactions: allVnpayTransactions.map(t => ({
+                            id: t._id,
+                            paymentTransactionId: t.paymentTransactionId,
+                            metadataRef: t.metadata?.vnp_TxnRef,
+                            createdAt: t.createdAt
+                        }))
+                    });
                 }
                 req.flash('error', 'Không tìm thấy giao dịch tương ứng');
                 return res.redirect('/coins/topup');
@@ -593,11 +708,36 @@ const coinController = {
                 };
                 await transaction.save();
 
-                if (wantsJSONResponse(req)) {
-                    return res.json({ success: true, message: 'Thanh toán thành công', transactionId: transaction._id });
+                // Detect mobile app by User-Agent, query parameter, or Accept header
+                const userAgent = req.headers['user-agent'] || '';
+                const isMobileApp = userAgent.includes('Android') || 
+                                   userAgent.includes('Mobile') || 
+                                   req.query.mobile === 'true' ||
+                                   wantsJSONResponse(req);
+                
+                console.log('🔍 Response type check:', {
+                    userAgent: userAgent.substring(0, 50),
+                    hasAcceptJson: req.headers.accept?.includes('application/json'),
+                    wantsJSON: wantsJSONResponse(req),
+                    isMobileApp: isMobileApp,
+                    queryMobile: req.query.mobile
+                });
+
+                // Return JSON for mobile apps
+                if (isMobileApp) {
+                    console.log('✅ Returning JSON response for mobile app');
+                    return res.json({ 
+                        success: true, 
+                        message: 'Thanh toán thành công', 
+                        transactionId: transaction._id,
+                        amount: transaction.amount,
+                        balanceAfter: transaction.balanceAfter,
+                        balanceBefore: transaction.balanceBefore
+                    });
                 }
 
-                // Redirect to success page with transaction info (no auth required)
+                // Redirect to success page with transaction info (for web browsers)
+                console.log('✅ Redirecting to payment-success page for web browser');
                 const bonusCoins = transaction.metadata?.bonusCoins || 0;
                 const baseCoins = transaction.metadata?.baseCoins || transaction.amount;
                 return res.redirect(`/coins/payment-success?txn=${transaction._id}&amount=${transaction.amount}&bonus=${bonusCoins}&base=${baseCoins}&balance=${transaction.balanceAfter || 0}`);
@@ -783,6 +923,379 @@ const coinController = {
         } catch (error) {
             console.error('Error showing payment failed page:', error);
             res.redirect('/coins/topup');
+        }
+    },
+
+    // Admin: Fix pending VNPay transactions (manually process transactions that were paid but not processed)
+    fixPendingTransactions: async (req, res) => {
+        try {
+            const CoinTransaction = require('../models/CoinTransaction');
+            const User = require('../models/User');
+            const { createNotification } = require('./notificationController');
+
+            // Find all pending VNPay transactions older than 5 minutes
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const pendingTransactions = await CoinTransaction.find({
+                paymentMethod: 'vnpay',
+                status: 'pending',
+                type: 'deposit',
+                createdAt: { $lt: fiveMinutesAgo }
+            }).populate('user', 'username coinBalance');
+
+            console.log(`🔍 Found ${pendingTransactions.length} pending VNPay transactions older than 5 minutes`);
+
+            const results = {
+                total: pendingTransactions.length,
+                processed: 0,
+                skipped: 0,
+                errors: []
+            };
+
+            for (const transaction of pendingTransactions) {
+                try {
+                    console.log(`\n🔍 Processing transaction: ${transaction._id}`);
+                    console.log(`   User: ${transaction.user?.username || transaction.user}`);
+                    console.log(`   Amount: ${transaction.amount} coins`);
+                    console.log(`   Payment Transaction ID: ${transaction.paymentTransactionId}`);
+                    console.log(`   Created: ${transaction.createdAt}`);
+
+                    const user = await User.findById(transaction.user);
+                    if (!user) {
+                        console.error(`   ❌ User not found: ${transaction.user}`);
+                        results.errors.push({
+                            transactionId: transaction._id,
+                            error: 'User not found'
+                        });
+                        continue;
+                    }
+
+                    const balanceBefore = user.coinBalance;
+                    const coinAmount = transaction.amount;
+                    const balanceAfter = balanceBefore + coinAmount;
+
+                    // Update user balance
+                    user.coinBalance = balanceAfter;
+                    await user.save();
+
+                    // Update transaction
+                    transaction.status = 'completed';
+                    transaction.balanceBefore = balanceBefore;
+                    transaction.balanceAfter = balanceAfter;
+                    transaction.metadata = {
+                        ...transaction.metadata,
+                        manuallyFixed: true,
+                        manuallyFixedAt: new Date(),
+                        fixedBy: req.user?.username || req.user?._id || 'admin'
+                    };
+                    await transaction.save();
+
+                    // Create notification
+                    try {
+                        const bonusCoins = transaction.metadata?.bonusCoins || 0;
+                        const bonusText = bonusCoins > 0 ? ` (bao gồm ${bonusCoins} coins bonus)` : '';
+                        const balanceText = user.coinBalance ? user.coinBalance.toLocaleString('vi-VN') : '0';
+                        await createNotification(
+                            transaction.user,
+                            'coin_transaction',
+                            'Nạp Coin thành công!',
+                            `Giao dịch nạp ${transaction.amount} coins${bonusText} đã được xử lý. Số dư hiện tại: ${balanceText} coins`,
+                            {
+                                transactionId: transaction._id.toString(),
+                                amount: transaction.amount,
+                                realMoneyAmount: transaction.realMoneyAmount,
+                                paymentMethod: 'vnpay',
+                                balanceAfter: user.coinBalance
+                            }
+                        );
+                    } catch (notifError) {
+                        console.error('Error creating notification:', notifError);
+                    }
+
+                    console.log(`   ✅ Transaction completed! Balance: ${balanceBefore} -> ${balanceAfter} (+${coinAmount} coins)`);
+                    results.processed++;
+                } catch (error) {
+                    console.error(`   ❌ Error processing transaction ${transaction._id}:`, error);
+                    results.errors.push({
+                        transactionId: transaction._id,
+                        error: error.message
+                    });
+                }
+            }
+
+            if (wantsJSONResponse(req)) {
+                return res.json({
+                    success: true,
+                    message: `Đã xử lý ${results.processed}/${results.total} giao dịch`,
+                    results
+                });
+            }
+
+            req.flash('success', `Đã xử lý ${results.processed}/${results.total} giao dịch pending`);
+            res.redirect('/admin/coin-transactions');
+        } catch (error) {
+            console.error('Error fixing pending transactions:', error);
+            if (wantsJSONResponse(req)) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Lỗi xử lý giao dịch pending',
+                    error: error.message
+                });
+            }
+            req.flash('error', 'Có lỗi xảy ra khi xử lý giao dịch pending');
+            res.redirect('/admin/coin-transactions');
+        }
+    },
+
+    // User: Manually trigger callback processing for a specific transaction
+    manualCallback: async (req, res) => {
+        try {
+            const { transactionId, vnp_TxnRef } = req.body;
+            const userId = req.user._id || req.user.id;
+
+            console.log('🔔 Manual callback triggered:', {
+                userId,
+                transactionId,
+                vnp_TxnRef
+            });
+
+            // Find transaction
+            let transaction = null;
+            if (transactionId) {
+                transaction = await CoinTransaction.findOne({ 
+                    _id: transactionId,
+                    user: userId 
+                });
+            } else if (vnp_TxnRef) {
+                transaction = await CoinTransaction.findOne({ 
+                    paymentTransactionId: vnp_TxnRef,
+                    user: userId 
+                });
+                if (!transaction) {
+                    transaction = await CoinTransaction.findOne({ 
+                        'metadata.vnp_TxnRef': vnp_TxnRef,
+                        user: userId 
+                    });
+                }
+            }
+
+            if (!transaction) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Không tìm thấy giao dịch'
+                });
+            }
+
+            // Check if already completed
+            if (transaction.status === 'completed') {
+                return res.json({
+                    success: true,
+                    message: 'Giao dịch đã được xử lý trước đó',
+                    transaction: {
+                        id: transaction._id,
+                        status: transaction.status,
+                        amount: transaction.amount,
+                        balanceAfter: transaction.balanceAfter
+                    }
+                });
+            }
+
+            // Process as if VNPay callback succeeded
+            const user = await User.findById(userId);
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Không tìm thấy người dùng'
+                });
+            }
+
+            const balanceBefore = user.coinBalance;
+            const coinAmount = transaction.amount;
+
+            // Add coins
+            user.coinBalance = balanceBefore + coinAmount;
+            await user.save();
+
+            // Update transaction
+            transaction.status = 'completed';
+            transaction.balanceBefore = balanceBefore;
+            transaction.balanceAfter = user.coinBalance;
+            transaction.metadata = {
+                ...transaction.metadata,
+                manuallyProcessed: true,
+                manuallyProcessedAt: new Date()
+            };
+            await transaction.save();
+
+            console.log('✅ Manual callback processed:', {
+                transactionId: transaction._id,
+                coinAmount,
+                balanceBefore,
+                balanceAfter: user.coinBalance
+            });
+
+            // Create notification
+            try {
+                const bonusCoins = transaction.metadata?.bonusCoins || 0;
+                const bonusText = bonusCoins > 0 ? ` (bao gồm ${bonusCoins} coins bonus)` : '';
+                const balanceText = user.coinBalance ? user.coinBalance.toLocaleString('vi-VN') : '0';
+                await createNotification(
+                    userId,
+                    'coin_transaction',
+                    'Nạp Coin thành công!',
+                    `Giao dịch nạp ${transaction.amount} coins${bonusText} đã được xử lý. Số dư hiện tại: ${balanceText} coins`,
+                    {
+                        transactionId: transaction._id.toString(),
+                        amount: transaction.amount,
+                        realMoneyAmount: transaction.realMoneyAmount,
+                        paymentMethod: 'vnpay',
+                        balanceAfter: user.coinBalance
+                    }
+                );
+            } catch (notifError) {
+                console.error('Error creating notification:', notifError);
+            }
+
+            return res.json({
+                success: true,
+                message: 'Đã xử lý giao dịch thành công',
+                transaction: {
+                    id: transaction._id,
+                    status: transaction.status,
+                    amount: transaction.amount,
+                    balanceBefore: transaction.balanceBefore,
+                    balanceAfter: transaction.balanceAfter
+                }
+            });
+        } catch (error) {
+            console.error('Error in manual callback:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Lỗi xử lý giao dịch',
+                error: error.message
+            });
+        }
+    },
+
+    // VNPay IPN Callback (server-to-server notification from VNPay)
+    handleVnpayCallback: async (req, res) => {
+        try {
+            console.log('🔔 VNPay IPN Callback received:', {
+                method: req.method,
+                query: Object.keys(req.query),
+                body: Object.keys(req.body || {}),
+                responseCode: req.query.vnp_ResponseCode || req.body.vnp_ResponseCode,
+                txnRef: req.query.vnp_TxnRef || req.body.vnp_TxnRef
+            });
+
+            // VNPay IPN can send data via GET or POST
+            const vnpParams = { ...req.query, ...req.body };
+
+            if (!Object.keys(vnpParams).length) {
+                console.error('❌ VNPay IPN: No parameters received');
+                return res.status(400).json({ RspCode: '01', Message: 'Missing parameters' });
+            }
+
+            // Verify signature
+            const isValid = vnpayService.verifyCallback(vnpParams);
+            if (!isValid) {
+                console.error('❌ VNPay IPN: Signature mismatch');
+                return res.status(400).json({ RspCode: '97', Message: 'Checksum failed' });
+            }
+
+            const responseCode = vnpParams.vnp_ResponseCode;
+            const txnRef = vnpParams.vnp_TxnRef;
+
+            // Find transaction
+            let transaction = await CoinTransaction.findOne({ paymentTransactionId: txnRef });
+            if (!transaction) {
+                transaction = await CoinTransaction.findOne({ 'metadata.vnp_TxnRef': txnRef });
+            }
+
+            if (!transaction) {
+                console.error('❌ VNPay IPN: Transaction not found:', txnRef);
+                return res.status(200).json({ RspCode: '01', Message: 'Transaction not found' });
+            }
+
+            // Process if payment successful and transaction still pending
+            if (responseCode === '00' && transaction.status === 'pending') {
+                const user = await User.findById(transaction.user);
+                if (!user) {
+                    console.error('❌ VNPay IPN: User not found for transaction:', transaction._id);
+                    return res.status(200).json({ RspCode: '01', Message: 'User not found' });
+                }
+
+                const balanceBefore = user.coinBalance;
+                const coinAmount = transaction.amount;
+
+                // Add coins
+                user.coinBalance = balanceBefore + coinAmount;
+                await user.save();
+
+                transaction.status = 'completed';
+                transaction.balanceBefore = balanceBefore;
+                transaction.balanceAfter = user.coinBalance;
+                transaction.metadata = {
+                    ...transaction.metadata,
+                    vnpayIpn: vnpParams
+                };
+                await transaction.save();
+
+                console.log('✅ VNPay IPN: Coin added successfully:', {
+                    transactionId: transaction._id,
+                    coinAmount,
+                    balanceBefore,
+                    balanceAfter: user.coinBalance
+                });
+
+                // Create notification
+                try {
+                    const bonusCoins = transaction.metadata?.bonusCoins || 0;
+                    await createNotification(
+                        transaction.user,
+                        'coin_transaction',
+                        'Nạp Coin thành công!',
+                        `Bạn đã nạp thành công ${transaction.amount} coins qua VNPay. Số dư hiện tại: ${user.coinBalance.toLocaleString('vi-VN')} coins`,
+                        {
+                            transactionId: transaction._id.toString(),
+                            amount: transaction.amount,
+                            realMoneyAmount: transaction.realMoneyAmount,
+                            paymentMethod: 'vnpay',
+                            balanceAfter: user.coinBalance
+                        }
+                    );
+                } catch (error) {
+                    console.error('Error creating VNPay IPN notification:', error);
+                }
+
+                // Return success to VNPay
+                return res.status(200).json({ RspCode: '00', Message: 'Success' });
+            } else if (responseCode !== '00' && transaction.status === 'pending') {
+                // Payment failed
+                transaction.status = 'failed';
+                transaction.metadata = {
+                    ...transaction.metadata,
+                    vnpayIpn: vnpParams,
+                    vnp_ResponseCode: responseCode
+                };
+                await transaction.save();
+
+                console.log('❌ VNPay IPN: Payment failed:', {
+                    transactionId: transaction._id,
+                    responseCode
+                });
+
+                return res.status(200).json({ RspCode: '00', Message: 'Received' });
+            } else {
+                // Already processed
+                console.log('ℹ️ VNPay IPN: Transaction already processed:', {
+                    transactionId: transaction._id,
+                    status: transaction.status
+                });
+                return res.status(200).json({ RspCode: '00', Message: 'Already processed' });
+            }
+        } catch (error) {
+            console.error('Error handling VNPay IPN callback:', error);
+            return res.status(500).json({ RspCode: '99', Message: 'Internal error' });
         }
     }
 };

@@ -100,7 +100,7 @@
                 <div class="row">
                   <% order.items.slice(0, 3).forEach(function(item) { %>
                     <div class="col-auto">
-                      <img src="<%= item.book.coverImage %>" 
+                      <img src="<%= item.book.coverImage && item.book.coverImage.startsWith('http') ? item.book.coverImage : '/uploads/' + item.book.coverImage %>" 
                            alt="<%= item.book.title %>" 
                            class="rounded"
                            style="width: 50px; height: 70px; object-fit: cover;"

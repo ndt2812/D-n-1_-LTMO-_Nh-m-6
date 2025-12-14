@@ -103,7 +103,7 @@ const createReview = async (req, res) => {
     ]);
 
     if (!canReview) {
-      return res.status(400).json({ success: false, error: 'Bạn chỉ có thể đánh giá những sách đã mua.' });
+      return res.status(400).json({ success: false, error: 'Bạn chỉ có thể đánh giá sau khi mua sách (đơn hàng được xác nhận đã nhận hoặc mua bằng Coin).' });
     }
 
     if (existingReview) {

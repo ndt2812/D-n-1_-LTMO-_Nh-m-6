@@ -24,6 +24,7 @@ router.get('/users', adminController.getUsers);
 router.get('/users/:id', adminController.getUserDetail);
 router.post('/users/:id/role', adminController.updateUserRole);
 router.post('/users/:id/toggle-status', adminController.toggleUserStatus);
+router.post('/users/:id/delete', adminController.deleteUser);
 
 // ===== BOOK MANAGEMENT =====
 router.get('/books', adminController.getBooks);
@@ -80,5 +81,6 @@ router.get('/api/coin-transactions/dashboard-stats', coinTransactionController.g
 router.get('/orders', adminOrderController.getOrders);
 router.get('/orders/:id', adminOrderController.getOrderDetail);
 router.post('/orders/:id/update-status', adminOrderController.updateOrderStatus);
+router.post('/orders/:id/confirm-return', adminOrderController.confirmReturn);
 
 module.exports = router;

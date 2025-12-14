@@ -823,14 +823,46 @@ app.post('/api/profile/avatar', authenticateToken, (req, res) => {
   });
 });
 
+// ===== API DELETE AVATAR =====
+app.delete('/api/profile/avatar', authenticateToken, async (req, res) => {
+  try {
+    // Set avatar to null or empty string to use default
+    req.user.avatar = null;
+    await req.user.save();
+
+    return res.json({
+      success: true,
+      message: 'Đã xóa ảnh đại diện thành công.',
+      user: {
+        id: req.user._id.toString(),
+        username: req.user.username,
+        email: req.user.profile?.email,
+        role: req.user.role,
+        avatar: req.user.avatar || null
+      }
+    });
+  } catch (deleteError) {
+    console.error('Xóa avatar thất bại:', deleteError);
+    return res.status(500).json({
+      success: false,
+      error: 'Không thể xóa avatar. Vui lòng thử lại.'
+    });
+  }
+});
+
 // ===== API GET BOOKS =====
 app.get('/api/books', async (req, res) => {
   try {
     let filterConditions = {};
 
-    // Search by title
+    // Search by title, author, or description
     if (req.query.search) {
-      filterConditions.title = new RegExp(req.query.search, 'i');
+      const searchRegex = new RegExp(req.query.search, 'i');
+      filterConditions.$or = [
+        { title: searchRegex },
+        { author: searchRegex },
+        { description: searchRegex }
+      ];
     }
 
     // Filter by category
@@ -857,8 +889,25 @@ app.get('/api/books', async (req, res) => {
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const booksWithFullUrls = books.map(book => {
       const bookObj = book.toObject();
-      if (bookObj.coverImage && !bookObj.coverImage.startsWith('http')) {
-        bookObj.coverImage = `${baseUrl}${bookObj.coverImage}`;
+      if (bookObj.coverImage) {
+        const trimmedCoverImage = bookObj.coverImage.trim();
+        const lowerCoverImage = trimmedCoverImage.toLowerCase();
+        // If it's already a full URL (http:// or https://), use it as-is
+        if (!lowerCoverImage.startsWith('http://') && !lowerCoverImage.startsWith('https://')) {
+          // It's a relative path
+          // If it doesn't start with /uploads/ and doesn't start with /, it's likely a filename
+          // Add /uploads/ prefix for uploaded files
+          let imagePath = trimmedCoverImage;
+          if (!imagePath.startsWith('/uploads/') && !imagePath.startsWith('/') && !imagePath.startsWith('uploads/')) {
+            imagePath = '/uploads/' + imagePath;
+          } else if (!imagePath.startsWith('/')) {
+            imagePath = '/' + imagePath;
+          }
+          bookObj.coverImage = `${baseUrl}${imagePath}`;
+        } else {
+          // It's already a full URL, use trimmed version
+          bookObj.coverImage = trimmedCoverImage;
+        }
       }
       return bookObj;
     });
@@ -888,8 +937,25 @@ app.get('/api/books/:id', async (req, res) => {
     // Convert coverImage path to full URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const bookObj = book.toObject();
-    if (bookObj.coverImage && !bookObj.coverImage.startsWith('http')) {
-      bookObj.coverImage = `${baseUrl}${bookObj.coverImage}`;
+    if (bookObj.coverImage) {
+      const trimmedCoverImage = bookObj.coverImage.trim();
+      const lowerCoverImage = trimmedCoverImage.toLowerCase();
+      // If it's already a full URL (http:// or https://), use it as-is
+      if (!lowerCoverImage.startsWith('http://') && !lowerCoverImage.startsWith('https://')) {
+        // It's a relative path
+        // If it doesn't start with /uploads/ and doesn't start with /, it's likely a filename
+        // Add /uploads/ prefix for uploaded files
+        let imagePath = trimmedCoverImage;
+        if (!imagePath.startsWith('/uploads/') && !imagePath.startsWith('/') && !imagePath.startsWith('uploads/')) {
+          imagePath = '/uploads/' + imagePath;
+        } else if (!imagePath.startsWith('/')) {
+          imagePath = '/' + imagePath;
+        }
+        bookObj.coverImage = `${baseUrl}${imagePath}`;
+      } else {
+        // It's already a full URL, use trimmed version
+        bookObj.coverImage = trimmedCoverImage;
+      }
     }
 
     res.json({ book: bookObj });

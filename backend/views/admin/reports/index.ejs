@@ -48,7 +48,7 @@
         <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
           <h1 class="h3 mb-0"><%= title %></h1>
           <% if (currentUser) { %>
-            <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+            <span class="badge bg-primary">Quản trị viên: <%= currentUser.username %></span>
           <% } %>
         </div>
 
@@ -110,7 +110,7 @@
               <div class="card-body">
                 <h6 class="text-uppercase mb-1">Giá trị TB</h6>
                 <h2 class="fw-bold"><%= Math.round(reportData.summary.avgOrderValue).toLocaleString('vi-VN') %>₫</h2>
-                <p class="mb-0"><i class="fas fa-chart-line me-2"></i>Average Order Value</p>
+                <p class="mb-0"><i class="fas fa-chart-line me-2"></i>Giá trị đơn hàng trung bình</p>
               </div>
             </div>
           </div>
@@ -209,9 +209,21 @@
                 <% if (reportData.statusBreakdown.length === 0) { %>
                   <p class="text-muted mb-0">Không có đơn hàng trong khoảng thời gian này.</p>
                 <% } else { %>
+                  <% 
+                    const statusMap = {
+                      'pending': 'Chờ xử lý',
+                      'processing': 'Đang xử lý',
+                      'shipped': 'Đã gửi hàng',
+                      'delivered': 'Đã giao hàng',
+                      'cancelled': 'Đã hủy',
+                      'completed': 'Hoàn thành',
+                      'failed': 'Thất bại',
+                      'refunded': 'Đã hoàn tiền'
+                    };
+                  %>
                   <% reportData.statusBreakdown.forEach(function(status) { %>
                     <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                      <span class="text-capitalize"><%= status._id %></span>
+                      <span><%= statusMap[status._id] || status._id %></span>
                       <span class="badge bg-light text-dark"><%= status.count %> đơn</span>
                     </div>
                   <% }); %>

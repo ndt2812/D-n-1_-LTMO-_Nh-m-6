@@ -56,19 +56,33 @@ reviewSchema.virtual('canEdit').get(function() {
     return daysDifference <= 7; // Allow editing within 7 days
 });
 
-// Method to check if user can review this book (must have ordered it)
+// Method to check if user can review this book (must have ordered and received it OR purchased with coins)
 reviewSchema.statics.canUserReview = async function(userId, bookId) {
     const Order = mongoose.model('Order');
+    const BookAccess = mongoose.model('BookAccess');
     
-    // Check if user has ordered this book
-    const hasOrdered = await Order.findOne({
+    // Check if user has ordered this book AND the order has been delivered
+    const hasOrderedAndDelivered = await Order.findOne({
         user: userId,
         'items.book': bookId,
-        orderStatus: { $nin: ['cancelled'] },
-        paymentStatus: { $nin: ['failed', 'cancelled'] }
+        orderStatus: 'delivered', // Chỉ cho phép đánh giá khi đơn hàng đã được xác nhận nhận
+        paymentStatus: { $nin: ['failed'] } // Payment phải thành công (paid hoặc pending nhưng đã delivered)
     });
     
-    return !!hasOrdered;
+    // Check if user has purchased this book with coins (has active BookAccess)
+    const hasBookAccess = await BookAccess.findOne({
+        user: userId,
+        book: bookId,
+        isActive: true,
+        // Check if access hasn't expired (if expiresAt exists)
+        $or: [
+            { expiresAt: null },
+            { expiresAt: { $gt: new Date() } }
+        ]
+    });
+    
+    // User can review if they have either ordered and received the book OR purchased it with coins
+    return !!(hasOrderedAndDelivered || hasBookAccess);
 };
 
 // Pre-save middleware to update updatedAt and set isEdited flag

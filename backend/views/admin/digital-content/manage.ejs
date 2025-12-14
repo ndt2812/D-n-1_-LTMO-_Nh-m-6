@@ -64,7 +64,7 @@
                         <a href="/admin/digital-content" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Quay lại
                         </a>
-                        <span class="badge bg-primary ms-2">Admin: <%= currentUser.username %></span>
+                        <span class="badge bg-primary ms-2">Quản trị viên: <%= currentUser.username %></span>
                     </div>
                 </div>
 
@@ -101,12 +101,12 @@
                                 <div class="mt-3">
                                     <% if (book.isDigitalAvailable) { %>
                                         <span class="badge bg-success me-2">
-                                            <i class="fas fa-download"></i> Digital Available
+                                            <i class="fas fa-download"></i> Có nội dung số
                                         </span>
                                     <% } %>
                                     <% if (book.hasPreview) { %>
                                         <span class="badge bg-info">
-                                            <i class="fas fa-eye"></i> Has Preview
+                                            <i class="fas fa-eye"></i> Có preview
                                         </span>
                                     <% } %>
                                 </div>
@@ -127,13 +127,13 @@
                                     <input class="form-check-input" type="checkbox" id="isDigitalAvailable" 
                                            name="isDigitalAvailable" <%= book.isDigitalAvailable ? 'checked' : '' %>>
                                     <label class="form-check-label" for="isDigitalAvailable">
-                                        Bật tính năng digital
+                                        Bật tính năng nội dung số
                                     </label>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="coinPrice" class="form-label">Giá bằng Coin</label>
+                                    <label for="coinPrice" class="form-label">Giá bằng xu</label>
                                     <input type="number" class="form-control" id="coinPrice" name="coinPrice" 
                                            value="<%= book.coinPrice || '' %>" min="0" placeholder="0">
                                     <small class="text-muted">Để trống hoặc 0 = miễn phí</small>
@@ -144,7 +144,7 @@
                                     <input class="form-check-input" type="checkbox" id="hasPreview" 
                                            name="hasPreview" <%= book.hasPreview ? 'checked' : '' %>>
                                     <label class="form-check-label" for="hasPreview">
-                                        Bật tính năng preview
+                                        Bật tính năng xem trước
                                     </label>
                                 </div>
                             </div>
@@ -205,14 +205,14 @@
                     
                     <% if (previewContent) { %>
                         <div class="alert alert-info mb-3">
-                            <strong>Preview hiện tại:</strong> 
+                            <strong>Nội dung xem trước hiện tại:</strong> 
                             <%= previewContent.totalChapters %> chương (DB), 
                             <%= previewContent.chapters ? previewContent.chapters.length : 0 %> chương (array),
                             tổng <%= previewContent.chapters ? previewContent.chapters.reduce((sum, ch) => sum + (ch.wordCount || 0), 0) : 0 %> từ
                             <form method="POST" action="/admin/digital-content/<%= book._id %>/delete-preview" 
-                                  class="d-inline ms-3" onsubmit="return confirm('Xác nhận xóa toàn bộ preview?')">
+                                  class="d-inline ms-3"                                   onsubmit="return confirm('Xác nhận xóa toàn bộ nội dung xem trước?')">
                                 <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    <i class="fas fa-trash"></i> Xóa preview
+                                    <i class="fas fa-trash"></i> Xóa nội dung xem trước
                                 </button>
                             </form>
                         </div>
@@ -220,7 +220,7 @@
 
                     <form method="POST" action="/admin/digital-content/<%= book._id %>/preview" id="previewForm" onsubmit="return submitPreviewForm(event)">
                         <div class="mb-3">
-                            <label class="form-label">Nội dung preview (có thể thêm bao nhiêu chương cũng được):</label>
+                            <label class="form-label">Nội dung xem trước (có thể thêm bao nhiêu chương cũng được):</label>
                             <div id="chaptersContainer">
                                 <% if (previewContent && previewContent.chapters) { %>
                                     <% previewContent.chapters.forEach((chapter, index) => { %>
@@ -355,7 +355,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Lưu nội dung preview
+                            <i class="fas fa-save"></i> Lưu nội dung xem trước
                         </button>
                     </form>
                 </div>
@@ -499,7 +499,7 @@
             
             // Chỉ cần ít nhất 1 chương
             if (chapters.length <= 1) {
-                alert('Cần ít nhất 1 chương preview');
+                alert('Cần ít nhất 1 chương xem trước');
                 return;
             }
 
@@ -543,7 +543,7 @@
             notification.className = 'alert alert-warning alert-dismissible fade show mt-2 save-reminder-alert';
             notification.innerHTML = `
                 <strong>⚠️ Lưu ý:</strong> Chương đã được xóa khỏi form. 
-                <strong>Vui lòng click nút "Lưu nội dung preview" bên dưới để lưu thay đổi vào database.</strong>
+                <strong>Vui lòng click nút "Lưu nội dung xem trước" bên dưới để lưu thay đổi vào cơ sở dữ liệu.</strong>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             
@@ -627,7 +627,7 @@
             
             // Validate số lượng chương - chỉ cần ít nhất 1 chương
             if (chapters.length < 1) {
-                alert('Preview cần ít nhất 1 chương');
+                alert('Nội dung xem trước cần ít nhất 1 chương');
                 return false;
             }
             // Không giới hạn số chương tối đa
@@ -673,7 +673,7 @@
             console.log(`📦 Số chương hợp lệ để gửi: ${chaptersData.length} / ${chapters.length} chương trong DOM`);
             
             if (chaptersData.length < 1) {
-                alert(`Preview cần ít nhất 1 chương có đầy đủ tiêu đề và nội dung. Hiện tại có ${chaptersData.length} chương hợp lệ trong số ${chapters.length} chương.`);
+                alert(`Nội dung xem trước cần ít nhất 1 chương có đầy đủ tiêu đề và nội dung. Hiện tại có ${chaptersData.length} chương hợp lệ trong số ${chapters.length} chương.`);
                 return false;
             }
             

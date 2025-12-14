@@ -24,7 +24,7 @@ const reviewController = {
 
             const canReview = await Review.canUserReview(userId, bookId);
             if (!canReview) {
-                req.flash('error', 'Bạn chỉ có thể đánh giá sách đã mua');
+                req.flash('error', 'Bạn chỉ có thể đánh giá sau khi mua sách (đơn hàng được xác nhận đã nhận hoặc mua bằng Coin)');
                 return res.redirect(`/books/${bookId}`);
             }
 
@@ -77,7 +77,7 @@ const reviewController = {
             // Check if user can review this book
             const canReview = await Review.canUserReview(userId, bookId);
             if (!canReview) {
-                req.flash('error', 'Bạn chỉ có thể đánh giá sách đã mua');
+                req.flash('error', 'Bạn chỉ có thể đánh giá sau khi mua sách (đơn hàng được xác nhận đã nhận hoặc mua bằng Coin)');
                 return res.redirect(`/books/${bookId}`);
             }
 

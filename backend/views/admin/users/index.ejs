@@ -27,7 +27,7 @@
             <div class="col-md-10">
                     <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
                         <h1><%= title %></h1>
-                        <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                        <span class="badge bg-primary">Quản trị viên: <%= currentUser.username %></span>
                     </div>                <!-- Flash Messages -->
                 <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
                     <div class="alert alert-success alert-dismissible fade show mt-3">
@@ -193,6 +193,13 @@
                                                                     </button>
                                                                 <% } %>
                                                             </form>
+                                                            <!-- Delete User -->
+                                                            <form method="POST" action="/admin/users/<%= u._id %>/delete" class="d-inline">
+                                                                <button type="submit" class="btn btn-outline-danger" 
+                                                                        title="Xóa người dùng">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
                                                         <% } else { %>
                                                             <span class="badge bg-info">Bạn</span>
                                                         <% } %>
@@ -249,7 +256,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Confirm before changing role or status
+        // Confirm before changing role, status, or deleting
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function(e) {
                 if (this.action.includes('/role')) {
@@ -258,6 +265,10 @@
                     }
                 } else if (this.action.includes('/toggle-status')) {
                     if (!confirm('Bạn có chắc muốn thay đổi trạng thái của tài khoản này?')) {
+                        e.preventDefault();
+                    }
+                } else if (this.action.includes('/delete')) {
+                    if (!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN người dùng này?\n\nHành động này sẽ xóa:\n- Tài khoản người dùng\n- Tất cả đơn hàng\n- Giỏ hàng\n- Đánh giá\n- Quyền truy cập sách\n- Giao dịch coin\n- Thông báo\n\nHành động này KHÔNG THỂ hoàn tác!')) {
                         e.preventDefault();
                     }
                 }

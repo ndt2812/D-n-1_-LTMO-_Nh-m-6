@@ -21,22 +21,22 @@ const authenticate = (req, res, next) => {
 };
 
 // GET /access/library - Xem thư viện sách đã mua
-router.get('/library', bookAccessController.showLibrary);
+router.get('/library', authenticate, bookAccessController.showLibrary);
 
 // GET /access/books/:bookId/reader - Đọc sách (full content)
-router.get('/books/:bookId/reader', bookAccessController.showBookReader);
+router.get('/books/:bookId/reader', authenticate, bookAccessController.showBookReader);
 
 // GET /access/books/:bookId/purchase - Form mua quyền truy cập
-router.get('/books/:bookId/purchase', bookAccessController.showPurchaseForm);
+router.get('/books/:bookId/purchase', authenticate, bookAccessController.showPurchaseForm);
 
 // POST /access/books/:bookId/purchase - Mua quyền truy cập bằng coin
-router.post('/books/:bookId/purchase', bookAccessController.purchaseAccess);
+router.post('/books/:bookId/purchase', authenticate, bookAccessController.purchaseAccess);
 
 // PUT /access/books/:bookId/progress - Cập nhật tiến độ đọc
-router.put('/books/:bookId/progress', bookAccessController.updateReadingProgress);
+router.put('/books/:bookId/progress', authenticate, bookAccessController.updateReadingProgress);
 
 // POST /access/books/:bookId/bookmark - Thêm bookmark
-router.post('/books/:bookId/bookmark', bookAccessController.addBookmark);
+router.post('/books/:bookId/bookmark', authenticate, bookAccessController.addBookmark);
 
 // API routes (JWT only for mobile)
 // GET /access/api/books/:bookId/check - Kiểm tra quyền truy cập
@@ -50,5 +50,11 @@ router.get('/api/books/:bookId/content', authenticateToken, (req, res, next) => 
     req.isApiRequest = true;
     next();
 }, bookAccessController.getFullContent);
+
+// GET /access/api/library - Lấy danh sách sách đã mua (API JSON cho mobile)
+router.get('/api/library', authenticateToken, (req, res, next) => {
+    req.isApiRequest = true;
+    next();
+}, bookAccessController.getLibraryApi);
 
 module.exports = router;

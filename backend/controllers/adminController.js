@@ -167,6 +167,61 @@ exports.toggleUserStatus = async (req, res) => {
   }
 };
 
+// Xóa người dùng hoàn toàn khỏi database
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      req.flash('error', 'Không tìm thấy người dùng');
+      return res.redirect('/admin/users');
+    }
+
+    // Không cho phép xóa chính mình
+    if (user._id.toString() === req.user._id.toString()) {
+      req.flash('error', 'Bạn không thể xóa tài khoản của chính mình');
+      return res.redirect('/admin/users');
+    }
+
+    const username = user.username;
+    const userId = user._id;
+
+    // Import các model cần thiết
+    const Order = require('../models/Order');
+    const Cart = require('../models/Cart');
+    const Review = require('../models/Review');
+    const BookAccess = require('../models/BookAccess');
+    const CoinTransaction = require('../models/CoinTransaction');
+    const Notification = require('../models/Notification');
+
+    // Xóa tất cả dữ liệu liên quan đến user
+    await Promise.all([
+      // Xóa đơn hàng
+      Order.deleteMany({ user: userId }),
+      // Xóa giỏ hàng
+      Cart.deleteMany({ user: userId }),
+      // Xóa đánh giá
+      Review.deleteMany({ user: userId }),
+      // Xóa quyền truy cập sách
+      BookAccess.deleteMany({ user: userId }),
+      // Xóa giao dịch coin
+      CoinTransaction.deleteMany({ user: userId }),
+      // Xóa thông báo
+      Notification.deleteMany({ user: userId })
+    ]);
+
+    // Xóa người dùng
+    await User.findByIdAndDelete(userId);
+
+    req.flash('success', `Đã xóa người dùng "${username}" và tất cả dữ liệu liên quan khỏi hệ thống`);
+    res.redirect('/admin/users');
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Có lỗi xảy ra khi xóa người dùng');
+    res.redirect('/admin/users');
+  }
+};
+
 // ===== QUẢN LÝ SÁCH =====
 
 // Hiển thị danh sách sách
@@ -263,9 +318,20 @@ exports.postCreateBook = [
         description: req.body.description,
         price: req.body.price,
         category: req.body.category,
-        stock: req.body.stock || 0,
-        coverImage: req.file ? req.file.filename : 'default-book-cover.jpg'
+        stock: req.body.stock || 0
       };
+
+      // Handle cover image: prioritize URL over file upload
+      if (req.body.coverImageUrl && req.body.coverImageUrl.trim()) {
+        // Use URL if provided
+        bookData.coverImage = req.body.coverImageUrl.trim();
+      } else if (req.file) {
+        // Use uploaded file if no URL
+        bookData.coverImage = req.file.filename;
+      } else {
+        // Default fallback
+        bookData.coverImage = 'default-book-cover.jpg';
+      }
 
       // Optional fields
       if (req.body.coinPrice) {
@@ -357,10 +423,15 @@ exports.postEditBook = [
       book.category = req.body.category;
       book.stock = req.body.stock || 0;
 
-      // Update cover image if new file uploaded
-      if (req.file) {
+      // Update cover image: prioritize URL over file upload
+      if (req.body.coverImageUrl && req.body.coverImageUrl.trim()) {
+        // Use URL if provided
+        book.coverImage = req.body.coverImageUrl.trim();
+      } else if (req.file) {
+        // Use uploaded file if no URL
         book.coverImage = req.file.filename;
       }
+      // If neither URL nor file is provided, keep existing coverImage
 
       // Optional fields
       if (req.body.coinPrice) {

@@ -108,7 +108,7 @@
               <% order.items.forEach(function(item) { %>
                 <div class="row align-items-center mb-3 pb-3 border-bottom">
                   <div class="col-md-2">
-                    <img src="<%= item.book.coverImage %>" 
+                    <img src="<%= item.book.coverImage && item.book.coverImage.startsWith('http') ? item.book.coverImage : '/uploads/' + item.book.coverImage %>" 
                          alt="<%= item.book.title %>" 
                          class="img-fluid rounded">
                   </div>

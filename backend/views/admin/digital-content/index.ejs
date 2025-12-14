@@ -44,7 +44,7 @@
             <div class="col-md-10">
                 <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
                     <h1><%= title %></h1>
-                    <span class="badge bg-primary">Admin: <%= currentUser.username %></span>
+                    <span class="badge bg-primary">Quản trị viên: <%= currentUser.username %></span>
                 </div>
 
                 <!-- Flash Messages -->
@@ -94,7 +94,7 @@
                     <div class="col-md-3">
                         <div class="card stats-card" style="background: linear-gradient(135deg,#fa709a 0%,#fee140 100%);">
                             <div class="card-body">
-                                <h6 class="text-uppercase mb-1">Giá TB (Coin)</h6>
+                                <h6 class="text-uppercase mb-1">Giá TB (Xu)</h6>
                                 <h2 class="fw-bold"><%= Math.round(stats.averagePrice || 0) %></h2>
                                 <p class="mb-0"><i class="fas fa-coins me-2"></i>Giá trung bình</p>
                             </div>
@@ -160,11 +160,11 @@
                                         <option value="disable_digital">Tắt nội dung số</option>
                                         <option value="enable_preview">Bật preview</option>
                                         <option value="disable_preview">Tắt preview</option>
-                                        <option value="set_coin_price">Đặt giá coin</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2" id="coinPriceInput" style="display: none;">
-                                    <input type="number" class="form-control" name="coinPrice" placeholder="Giá coin" min="0">
+                                    <option value="set_coin_price">Đặt giá xu</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2" id="coinPriceInput" style="display: none;">
+                                <input type="number" class="form-control" name="coinPrice" placeholder="Giá xu" min="0">
                                 </div>
                                 <div class="col-md-2">
                                     <button type="submit" class="btn btn-warning">
@@ -201,9 +201,9 @@
                                             <th width="30"></th>
                                             <th>Sách</th>
                                             <th>Danh mục</th>
-                                            <th>Giá Coin</th>
+                                            <th>Giá xu</th>
                                             <th>Trạng thái</th>
-                                            <th>Preview</th>
+                                            <th>Xem trước</th>
                                             <th width="150">Thao tác</th>
                                         </tr>
                                     </thead>
@@ -246,7 +246,7 @@
                                                 <td>
                                                     <% if (book.isDigitalAvailable) { %>
                                                         <span class="digital-status status-digital">
-                                                            <i class="fas fa-download"></i> Digital
+                                                            <i class="fas fa-download"></i> Có nội dung số
                                                         </span>
                                                     <% } else { %>
                                                         <span class="digital-status status-none">
@@ -284,7 +284,7 @@
                                                         
                                                         <% if (book.previewContent) { %>
                                                             <button type="button" class="btn btn-outline-info" 
-                                                                    onclick="showPreview('<%= book._id %>')" title="Xem preview">
+                                                                    onclick="showPreview('<%= book._id %>')" title="Xem nội dung xem trước">
                                                                 <i class="fas fa-eye"></i>
                                                             </button>
                                                         <% } %>
@@ -344,11 +344,11 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Nội dung Preview</h5>
+                    <h5 class="modal-title">Nội dung xem trước</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="previewContent">
-                    <!-- Preview content will be loaded here -->
+                    <!-- Nội dung xem trước sẽ được tải ở đây -->
                 </div>
             </div>
         </div>

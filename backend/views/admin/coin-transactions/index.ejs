@@ -55,9 +55,9 @@
                     <h1><%= title %></h1>
                     <div>
                         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createTransactionModal">
-                            <i class="fas fa-plus"></i> Tặng Coin
+                            <i class="fas fa-plus"></i> Tặng xu
                         </button>
-                        <span class="badge bg-primary ms-2">Admin: <%= currentUser.username %></span>
+                        <span class="badge bg-primary ms-2">Quản trị viên: <%= currentUser.username %></span>
                     </div>
                 </div>
 
@@ -90,9 +90,9 @@
                     <div class="col-md-3">
                         <div class="card stats-card" style="background: linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);">
                             <div class="card-body">
-                                <h6 class="text-uppercase mb-1">Nạp Coin</h6>
+                                <h6 class="text-uppercase mb-1">Nạp xu</h6>
                                 <h2 class="fw-bold"><%= stats.totalDeposits.toLocaleString('vi-VN') %></h2>
-                                <p class="mb-0"><i class="fas fa-arrow-down me-2"></i>Coin đã nạp</p>
+                                <p class="mb-0"><i class="fas fa-arrow-down me-2"></i>Xu đã nạp</p>
                             </div>
                         </div>
                     </div>
@@ -101,7 +101,7 @@
                             <div class="card-body">
                                 <h6 class="text-uppercase mb-1">Chi tiêu</h6>
                                 <h2 class="fw-bold"><%= stats.totalPurchases.toLocaleString('vi-VN') %></h2>
-                                <p class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Coin đã chi</p>
+                                <p class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Xu đã chi</p>
                             </div>
                         </div>
                     </div>
@@ -135,7 +135,7 @@
                             <div class="col-md-3">
                                 <label for="search" class="form-label">Tìm kiếm</label>
                                 <input type="text" class="form-control" id="search" name="search" 
-                                       value="<%= filters.search %>" placeholder="Username, email, mô tả...">
+                                       value="<%= filters.search %>" placeholder="Tên đăng nhập, thư điện tử, mô tả...">
                             </div>
                             <div class="col-md-2">
                                 <label for="type" class="form-label">Loại</label>
@@ -180,7 +180,7 @@
                             </a>
                             <a href="/admin/coin-transactions/export?type=<%= filters.type %>&status=<%= filters.status %>&dateFrom=<%= filters.dateFrom %>&dateTo=<%= filters.dateTo %>" 
                                class="btn btn-success btn-sm">
-                                <i class="fas fa-download"></i> Xuất Excel
+                                <i class="fas fa-download"></i> Xuất bảng tính
                             </a>
                         </div>
                     </div>
@@ -202,8 +202,8 @@
                                         <tr>
                                             <th>Người dùng</th>
                                             <th>Loại</th>
-                                            <th>Số Coin</th>
-                                            <th>Số tiền (VND)</th>
+                                            <th>Số xu</th>
+                                            <th>Số tiền (VNĐ)</th>
                                             <th>Trạng thái</th>
                                             <th>Thời gian</th>
                                             <th>Thao tác</th>
@@ -214,9 +214,9 @@
                                             <tr>
                                                 <td>
                                                     <div>
-                                                        <strong><%= transaction.user?.username || 'N/A' %></strong><br>
+                                                        <strong><%= transaction.user?.username || 'Không có' %></strong><br>
                                                         <small class="text-muted">
-                                                            <%= transaction.user?.email || 'N/A' %>
+                                                            <%= transaction.user?.email || 'Không có' %>
                                                         </small>
                                                     </div>
                                                 </td>
@@ -240,12 +240,12 @@
                                                         <span class="text-danger">-<%= transaction.amount.toLocaleString('vi-VN') %></span>
                                                     <% } %>
                                                     <small class="text-muted d-block">
-                                                        Số dư: <%= transaction.balanceAfter.toLocaleString('vi-VN') %>
+                                                        Số dư: <%= transaction.balanceAfter.toLocaleString('vi-VN') %> xu
                                                     </small>
                                                 </td>
                                                 <td>
                                                     <% if (transaction.realMoneyAmount > 0) { %>
-                                                        <%= transaction.realMoneyAmount.toLocaleString('vi-VN') %>₫
+                                                        <%= transaction.realMoneyAmount.toLocaleString('vi-VN') %> đ
                                                     <% } else { %>
                                                         <span class="text-muted">-</span>
                                                     <% } %>
@@ -328,30 +328,30 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Tặng Coin cho người dùng</h5>
+                    <h5 class="modal-title">Tặng xu cho người dùng</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="/admin/coin-transactions/create">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="userId" class="form-label">Người dùng</label>
-                            <input type="text" class="form-control" id="userSearch" placeholder="Tìm theo username hoặc email...">
+                            <input type="text" class="form-control" id="userSearch" placeholder="Tìm theo tên đăng nhập hoặc thư điện tử...">
                             <input type="hidden" id="userId" name="userId" required>
                             <div id="userSearchResults" class="mt-2"></div>
                         </div>
                         <div class="mb-3">
-                            <label for="amount" class="form-label">Số lượng Coin</label>
+                            <label for="amount" class="form-label">Số lượng xu</label>
                             <input type="number" class="form-control" id="amount" name="amount" required min="1" max="10000">
                         </div>
                         <div class="mb-3">
                             <label for="description" class="form-label">Mô tả</label>
                             <input type="text" class="form-control" id="description" name="description" 
-                                   required placeholder="Lý do tặng coin...">
+                                   required placeholder="Lý do tặng xu...">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-success">Tặng Coin</button>
+                        <button type="submit" class="btn btn-success">Tặng xu</button>
                     </div>
                 </form>
             </div>

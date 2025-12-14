@@ -73,7 +73,7 @@ const OrderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['cash_on_delivery', 'bank_transfer', 'credit_card', 'coin'],
+    enum: ['cash_on_delivery', 'bank_transfer', 'credit_card', 'coin', 'vnpay'],
     required: true
   },
   paymentStatus: {
@@ -83,7 +83,7 @@ const OrderSchema = new mongoose.Schema({
   },
   orderStatus: {
     type: String,
-    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'return_requested', 'returned'],
     default: 'pending'
   },
   totalAmount: {
@@ -103,6 +103,10 @@ const OrderSchema = new mongoose.Schema({
   },
   trackingNumber: {
     type: String
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   }
 }, { timestamps: true });
 
